@@ -15,10 +15,15 @@
  */
 package egovframework.example.sample.web;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.egovframe.rte.fdl.property.EgovPropertyService;
 import org.egovframe.rte.ptl.mvc.tags.ui.pagination.PaginationInfo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.ui.ModelMap;
@@ -55,7 +60,7 @@ import lombok.RequiredArgsConstructor;
 @Controller
 @RequiredArgsConstructor
 public class EgovSampleController {
-
+	private static final Logger log = LoggerFactory.getLogger(EgovSampleController.class);
 	/** EgovSampleService */
 	private final EgovSampleService sampleService;
 
@@ -74,7 +79,7 @@ public class EgovSampleController {
 	 */
 	@GetMapping("/egovSampleList.do")
 	public String selectSampleList(@ModelAttribute("searchVO") SampleDefaultVO searchVO, ModelMap model) throws Exception {
-
+		log.info("\nSTART::selectSampleList {} ************************************************************************");
 		/** EgovPropertyService.sample */
 		searchVO.setPageUnit(propertiesService.getInt("pageUnit"));
 		searchVO.setPageSize(propertiesService.getInt("pageSize"));
@@ -95,7 +100,7 @@ public class EgovSampleController {
 		int totCnt = sampleService.selectSampleListTotCnt(searchVO);
 		paginationInfo.setTotalRecordCount(totCnt);
 		model.addAttribute("paginationInfo", paginationInfo);
-
+		log.info("\nEND::selectSampleList {} **************************************************************************");
 		return "sample/egovSampleList";
 	}
 
