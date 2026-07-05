@@ -15,9 +15,16 @@
  */
 package egovframework.example.sample.web;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
+
+import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.lang3.StringUtils;
 import org.egovframe.rte.fdl.property.EgovPropertyService;
@@ -37,6 +44,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.support.SessionStatus;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.multipart.MultipartHttpServletRequest;
 import org.springmodules.validation.commons.DefaultBeanValidator;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -89,10 +98,7 @@ public class EgovSampleController {
             searchVO.setPageSize(5);  // 페이징 네비게이션 크기
             
             PaginationInfo paginationInfo = new PaginationInfo();
-            
-            
-            log.info("searchVO.getSearchKeyword : {} " , searchVO.getSearchKeyword() , searchVO);
-            
+
             if(StringUtils.isNoneBlank(searchVO.getSearchKeyword())) {
             	searchVO.setPageIndex(1);
             }
@@ -104,10 +110,7 @@ public class EgovSampleController {
             searchVO.setFirstIndex(paginationInfo.getFirstRecordIndex());
             searchVO.setLastIndex(paginationInfo.getLastRecordIndex());
             searchVO.setRecordCountPerPage(paginationInfo.getRecordCountPerPage());
-            
-            
-            
-            
+
             /** 2. 데이터 조회 */
             List<?> sampleList = sampleService.selectSampleList(searchVO);
             int totCnt = sampleService.selectSampleListTotCnt(searchVO);
@@ -129,6 +132,69 @@ public class EgovSampleController {
             return new ResponseEntity<>( resultMap, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+    
+    @RequestMapping(value = "/updateEgovSampleAjax.do")
+    @ResponseBody
+    public Map<String, Object> updateEgovSampleAjax(MultipartHttpServletRequest multiRequest, HttpServletRequest request) throws Exception {
+        Map<String, Object> resultMap = new HashMap<>();
+        
+        try {
+            // 1. 파라미터 데이터 확인 (formData에 넣었던 일반 텍스트 데이터 추출 예시)
+            String sampleId = multiRequest.getParameter("id"); 
+            String sampleName = multiRequest.getParameter("name");
+            
+            // TODO: 기존 데이터 수정 비즈니스 로직 수행 (예: sampleService.updateSample(...))
+
+            // 2. 파일 업로드 처리 (InputStream 활용)
+            Map<String, MultipartFile> files = multiRequest.getFileMap();
+            Iterator<String> tags = files.keySet().iterator();
+            
+            // 저장할 파일 경로 설정 (서버 환경에 맞게 수정 필요)
+            String uploadPath = request.getServletContext().getRealPath("/upload/");
+            File saveDir = new File(uploadPath);
+            if (!saveDir.exists()) {
+                saveDir.mkdirs(); // 디렉토리가 없으면 생성
+            }
+
+            while (tags.hasNext()) {
+                String tagName = tags.next();
+                MultipartFile multipartFile = files.get(tagName);
+                
+                if (multipartFile != null && !multipartFile.isEmpty()) {
+                    String originalFileName = multipartFile.getOriginalFilename();
+                    // 파일명 중복 방지를 위한 UUID 적용
+                    String savedFileName = UUID.randomUUID().toString() + "_" + originalFileName; 
+                    
+                    File targetFile = new File(uploadPath + File.separator + savedFileName);
+                    
+                    // 핵심: InputStream을 열어서 파일 저장 처리
+                    try (InputStream inputStream = multipartFile.getInputStream();
+                         FileOutputStream outputStream = new FileOutputStream(targetFile)) {
+                        
+                        byte[] buffer = new byte[4096];
+                        int bytesRead;
+                        while ((bytesRead = inputStream.read(buffer)) != -1) {
+                            outputStream.write(buffer, 0, bytesRead);
+                        }
+                    }
+                    
+                    // (선택) DB에 파일 정보 저장 로직 필요 시 여기에 구현
+                    System.out.println("파일 저장 완료: " + targetFile.getAbsolutePath());
+                }
+            }
+
+            resultMap.put("result", "SUCCESS");
+            resultMap.put("message", "정상적으로 수정 및 파일 업로드가 완료되었습니다.");
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            resultMap.put("result", "FAIL");
+            resultMap.put("message", "오류가 발생했습니다: " + e.getMessage());
+        }
+
+        return resultMap; // @ResponseBody에 의해 JSON 형태로 클라이언트에 반환됩니다.
+    }
+    
 	/**
 	 * 글 목록을 조회한다. (pageing)
 	 * @param searchVO - 조회할 정보가 담긴 SampleDefaultVO
