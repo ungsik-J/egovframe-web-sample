@@ -19,6 +19,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
 import org.egovframe.rte.fdl.property.EgovPropertyService;
 import org.egovframe.rte.ptl.mvc.tags.ui.pagination.PaginationInfo;
 import org.slf4j.Logger;
@@ -88,6 +89,14 @@ public class EgovSampleController {
             searchVO.setPageSize(5);  // 페이징 네비게이션 크기
             
             PaginationInfo paginationInfo = new PaginationInfo();
+            
+            
+            log.info("searchVO.getSearchKeyword : {} " , searchVO.getSearchKeyword() , searchVO);
+            
+            if(StringUtils.isNoneBlank(searchVO.getSearchKeyword())) {
+            	searchVO.setPageIndex(1);
+            }
+            
             paginationInfo.setCurrentPageNo(searchVO.getPageIndex());
             paginationInfo.setRecordCountPerPage(searchVO.getPageUnit());
             paginationInfo.setPageSize(searchVO.getPageSize());
@@ -96,7 +105,7 @@ public class EgovSampleController {
             searchVO.setLastIndex(paginationInfo.getLastRecordIndex());
             searchVO.setRecordCountPerPage(paginationInfo.getRecordCountPerPage());
             
-            log.info("searchVO {} " , searchVO.getSearchCondition() , searchVO);
+            
             
             
             /** 2. 데이터 조회 */
