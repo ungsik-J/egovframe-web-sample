@@ -1,141 +1,350 @@
 <%@ page contentType="text/html; charset=utf-8" pageEncoding="utf-8"%>
 <%@ taglib prefix="c"      uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="form"   uri="http://www.springframework.org/tags/form" %>
-<%@ taglib prefix="ui"     uri="http://egovframework.gov/ctl/ui"%>
 <%@ taglib prefix="spring" uri="http://www.springframework.org/tags"%>
-<%
-  /**
-  * @Class Name : egovSampleList.jsp
-  * @Description : Sample List 화면
-  * @Modification Information
-  *
-  *   수정일         수정자                   수정내용
-  *  -------    --------    ---------------------------
-  *  2009.02.01            최초 생성
-  *
-  * author 실행환경 개발팀
-  * since 2009.02.01
-  *
-  * Copyright (C) 2009 by MOPAS  All right reserved.
-  */
-%>
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" lang="ko" xml:lang="ko">
+<!DOCTYPE html>
+<html lang="ko">
 <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title><spring:message code="title.sample" /></title>
-    <link type="text/css" rel="stylesheet" href="<c:url value='/css/egovframework/sample.css'/>"/>
-    <script type="text/javaScript" language="javascript" defer="defer">
-        <!--
-        /* 글 수정 화면 function */
-        function fn_egov_select(id) {
-        	document.listForm.selectedId.value = id;
-           	document.listForm.action = "<c:url value='/updateSampleView.do'/>";
-           	document.listForm.submit();
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>전자정부 AJAX 샘플 - 모던 UI</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    
+    <style>
+        /* Modern CSS Reset & Variables */
+        :root {
+            --primary-color: #4f46e5;
+            --primary-hover: #4338ca;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            --table-th-bg: #f8fafc;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --radius: 12px;
+            --radius-sm: 6px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.5;
+            padding: 40px 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        /* 메인 컨테이너 구조 */
+        .container {
+            width: 100%;
+            max-width: 800px;
+            background-color: var(--card-bg);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-md);
+            padding: 32px;
+            border: 1px solid var(--border-color);
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 24px;
+            color: var(--text-main);
+            letter-spacing: -0.025em;
+        }
+
+        /* 상단 검색 바 영역 (Flexbox 활용) */
+        .search-container {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 24px;
+            background: var(--bg-color);
+            padding: 12px;
+            border-radius: var(--radius);
+            border: 1px solid var(--border-color);
+        }
+
+        .search-container select, 
+        .search-container input[type="text"] {
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            padding: 10px 14px;
+            font-size: 0.95rem;
+            color: var(--text-main);
+            background-color: var(--card-bg);
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        .search-container select {
+            min-width: 100px;
+            cursor: pointer;
+        }
+
+        .search-container input[type="text"] {
+            flex-grow: 1;
+        }
+
+        .search-container select:focus,
+        .search-container input[type="text"]:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+        }
+
+        /* 세련된 플랫 버튼 스킨 */
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: var(--radius-sm);
+            padding: 10px 20px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+        }
+
+        /* 테이블 스크롤 및 반응형 래퍼 */
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border-color);
+            margin-bottom: 24px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        /* 모던 데이터 테이블 컴포넌트 */
+        .custom-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.95rem;
+        }
+
+        .custom-table th {
+            background-color: var(--table-th-bg);
+            color: var(--text-muted);
+            font-weight: 600;
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .custom-table td {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-main);
+        }
+
+        .custom-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* 테이블 내부 요소 제어 클래스 */
+        .custom-table tbody tr {
+            transition: background-color 0.15s ease;
+        }
+        .custom-table tbody tr:hover {
+            background-color: rgba(241, 245, 249, 0.6);
+        }
+
+        .text-center { text-align: center; }
+        
+        .custom-table a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .custom-table a:hover {
+            text-decoration: underline;
+        }
+
+        /* 컴팩트 페이징 버튼 스타일 UI */
+        .pagination-wrap {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 4px;
+            margin-top: 8px;
+        }
+
+        .pagination-wrap a, 
+        .pagination-wrap strong {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 36px;
+            height: 36px;
+            padding: 0 6px;
+            font-size: 0.9rem;
+            border-radius: var(--radius-sm);
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .pagination-wrap a {
+            color: var(--text-muted);
+            border: 1px solid transparent;
+        }
+
+        .pagination-wrap a:hover {
+            background-color: var(--border-color);
+            color: var(--text-main);
+        }
+
+        .pagination-wrap strong {
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: 600;
+        }
+
+        .pagination-wrap .nav-btn {
+            border: 1px solid var(--border-color);
+            background-color: var(--card-bg);
+            font-weight: 500;
+        }
+    </style>
+    
+    <script type="text/javascript">
+        $(document).ready(function() {
+            fn_select_list();
+        });
+
+        /* AJAX 목록 조회 함수 */
+        function fn_select_list() {
+            var formData = $("#searchForm").serialize();
+            
+            $.ajax({
+                type: "GET",
+                url: "<c:url value='/egovSampleListAjax.do'/>",
+                data: formData,
+                dataType: "json",
+                success: function(data) {
+                    if(data.result === "SUCCESS") {
+                        var list = data.resultList;
+                        var pagination = data.paginationInfo;
+                        var searchVO = data.searchVO;
+                        var html = "";
+                        
+                        if(list.length === 0) {
+                            html += "<tr><td colspan='3' class='text-center' style='color: var(--text-muted); padding: 30px 0;'>조회된 데이터가 없습니다.</td></tr>";
+                        } else {
+                            $.each(list, function(index, item) {
+                                var rowNum = pagination.totalRecordCount + 1 - ((searchVO.pageIndex - 1) * searchVO.pageSize + (index + 1));
+                                
+                                html += "<tr>";
+                                html += "  <td class='text-center' style='width: 15%; color: var(--text-muted);'>" + rowNum + "</td>";
+                                html += "  <td class='text-center' style='width: 25%; font-variant-numeric: tabular-nums;'>" + item.id + "</td>";
+                                html += "  <td style='width: 60%;'><a href='javascript:void(0);' onclick='fn_detail(\""+ item.id +"\")'>" + item.name + "</a></td>";
+                                html += "</tr>";
+                            });
+                        }
+                        
+                        $("#listBody").html(html);
+                        fn_render_pagination(pagination);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    alert("데이터를 불러오는 중 오류가 발생했습니다.");
+                }
+            });
+        }
+
+        function fn_link_page(pageNo) {
+            $("#pageIndex").val(pageNo);
+            fn_select_list();
+        }
+
+        /* AJAX용 페이징 마크업 동적 주입 (UI 클래스 반영 고도화) */
+        function fn_render_pagination(pagination) {
+            var pagingHtml = "";
+            var firstPage = pagination.firstPageNoOnPageList;
+            var lastPage = pagination.lastPageNoOnPageList;
+            var totalPage = pagination.totalPageCount;
+            var currentPage = pagination.currentPageNo;
+            
+            // [이전] 버튼 클래스화 (`nav-btn`)
+            if(firstPage > 1) {
+                pagingHtml += "<a href='#' class='nav-btn' onclick='fn_link_page(" + (firstPage - 1) + "); return false;'>이전</a>";
+            }
+            
+            // 페이지 넘버 서식 최신화
+            for(var i = firstPage; i <= lastPage; i++) {
+                if(i === currentPage) {
+                    pagingHtml += "<strong>" + i + "</strong>";
+                } else {
+                    pagingHtml += "<a href='#' onclick='fn_link_page(" + i + "); return false;'>" + i + "</a>";
+                }
+            }
+            
+            // [다음] 버튼 클래스화 (`nav-btn`)
+            if(lastPage < totalPage) {
+                pagingHtml += "<a href='#' class='nav-btn' onclick='fn_link_page(" + (lastPage + 1) + "); return false;'>다음</a>";
+            }
+            
+            $("#pagingArea").html(pagingHtml);
         }
         
-        /* 글 등록 화면 function */
-        function fn_egov_addView() {
-           	document.listForm.action = "<c:url value='/addSample.do'/>";
-           	document.listForm.submit();
+        function fn_detail(id) {
+            alert("선택한 ID: " + id);
         }
-        
-        /* 글 목록 화면 function */
-        function fn_egov_selectList() {
-        	document.listForm.action = "<c:url value='/egovSampleList.do'/>";
-           	document.listForm.submit();
-        }
-        
-        /* pagination 페이지 링크 function */
-        function fn_egov_link_page(pageNo){
-        	document.listForm.pageIndex.value = pageNo;
-        	document.listForm.action = "<c:url value='/egovSampleList.do'/>";
-           	document.listForm.submit();
-        }
-        
-        //-->
     </script>
 </head>
+<body>
 
-<body style="text-align:center; margin:0 auto; display:inline; padding-top:100px;">
-    <form:form modelAttribute="searchVO" id="listForm" name="listForm" method="get">
-        <input type="hidden" name="selectedId" />
-        <div id="content_pop">
-        	<!-- 타이틀 -->
-        	<div id="title">
-        		<ul>
-        			<li><img src="<c:url value='/images/egovframework/example/title_dot.gif'/>" alt=""/><spring:message code="list.sample" /></li>
-        		</ul>
-        	</div>
-        	<!-- // 타이틀 -->
-        	<div id="search">
-        		<ul>
-        			<li>
-        			    <label for="searchCondition" style="visibility:hidden;"><spring:message code="search.choose" /></label>
-        				<form:select path="searchCondition" cssClass="use">
-        					<form:option value="1" label="Name" />
-        					<form:option value="0" label="ID" />
-        				</form:select>
-        			</li>
-        			<li><label for="searchKeyword" style="visibility:hidden;display:none;"><spring:message code="search.keyword" /></label>
-                        <form:input path="searchKeyword" cssClass="txt"/>
-                    </li>
-        			<li>
-        	            <span class="btn_blue_l">
-        	                <a href="javascript:fn_egov_selectList();"><spring:message code="button.search" /></a>
-        	                <img src="<c:url value='/images/egovframework/example/btn_bg_r.gif'/>" style="margin-left:6px;" alt=""/>
-        	            </span>
-        	        </li>
-                </ul>
-        	</div>
-        	<!-- List -->
-        	<div id="table">
-        		<table width="100%" border="0" cellpadding="0" cellspacing="0" summary="카테고리ID, 케테고리명, 사용여부, Description, 등록자 표시하는 테이블">
-        			<caption style="visibility:hidden">카테고리ID, 케테고리명, 사용여부, Description, 등록자 표시하는 테이블</caption>
-        			<colgroup>
-        				<col width="40"/>
-        				<col width="100"/>
-        				<col width="150"/>
-        				<col width="80"/>
-        				<col width="?"/>
-        				<col width="60"/>
-        			</colgroup>
-        			<tr>
-        				<th align="center">No</th>
-        				<th align="center"><spring:message code="title.sample.id" /></th>
-        				<th align="center"><spring:message code="title.sample.name" /></th>
-        				<th align="center"><spring:message code="title.sample.useYn" /></th>
-        				<th align="center"><spring:message code="title.sample.description" /></th>
-        				<th align="center"><spring:message code="title.sample.regUser" /></th>
-        			</tr>
-        			<c:forEach var="result" items="${resultList}" varStatus="status">
-            			<tr>
-            				<td align="center" class="listtd"><c:out value="${paginationInfo.totalRecordCount+1 - ((searchVO.pageIndex-1) * searchVO.pageSize + status.count)}"/></td>
-            				<td align="center" class="listtd"><a href="javascript:fn_egov_select('<c:out value="${result.id}"/>')"><c:out value="${result.id}"/></a></td>
-            				<td align="left" class="listtd"><c:out value="${result.name}"/>&nbsp;</td>
-            				<td align="center" class="listtd"><c:out value="${result.useYn}"/>&nbsp;</td>
-            				<td align="center" class="listtd"><c:out value="${result.description}"/>&nbsp;</td>
-            				<td align="center" class="listtd"><c:out value="${result.regUser}"/>&nbsp;</td>
-            			</tr>
-        			</c:forEach>
-        		</table>
-        	</div>
-        	<!-- /List -->
-        	<div id="paging">
-        		<ui:pagination paginationInfo = "${paginationInfo}" type="image" jsFunction="fn_egov_link_page" />
-        		<form:hidden path="pageIndex" />
-        	</div>
-        	<div id="sysbtn">
-        	  <ul>
-        	      <li>
-        	          <span class="btn_blue_l">
-        	              <a href="javascript:fn_egov_addView();"><spring:message code="button.create" /></a>
-                          <img src="<c:url value='/images/egovframework/example/btn_bg_r.gif'/>" style="margin-left:6px;" alt=""/>
-                      </span>
-                  </li>
-              </ul>
-        	</div>
+    <div class="container">
+        <h2>전자정부 표준 AJAX 리스트</h2>
+
+        <form id="searchForm" name="searchForm" method="post" onsubmit="fn_select_list(); return false;">
+            <input type="hidden" id="pageIndex" name="pageIndex" value="1" />
+            <div class="search-container">
+                <select name="searchCondition">
+                    <option value="0">ID</option>
+                    <option value="1">이름</option>
+                </select>
+                <input type="text" name="searchKeyword" placeholder="검색어를 입력해 주세요..." />
+                <button type="button" class="btn-primary" onclick="fn_select_list();">검색</button>
+            </div>
+        </form>
+
+        <div class="table-responsive">
+            <table class="custom-table">
+                <thead>
+                    <tr>
+                        <th class="text-center">No</th>
+                        <th class="text-center">ID</th>
+                        <th>이름</th>
+                    </tr>
+                </thead>
+                <tbody id="listBody">
+                    <tr>
+                        <td colspan="3" class="text-center" style="color: var(--text-muted); padding: 30px 0;">데이터를 로딩 중입니다...</td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
-    </form:form>
+
+        <div id="pagingArea" class="pagination-wrap"></div>
+    </div>
+
 </body>
 </html>

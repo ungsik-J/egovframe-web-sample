@@ -15,11 +15,16 @@
  */
 package egovframework.example.sample.web;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
 import org.egovframe.rte.fdl.property.EgovPropertyService;
 import org.egovframe.rte.ptl.mvc.tags.ui.pagination.PaginationInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.ui.ModelMap;
@@ -27,10 +32,13 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.support.SessionStatus;
 import org.springmodules.validation.commons.DefaultBeanValidator;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import egovframework.example.sample.service.EgovSampleService;
 import egovframework.example.sample.service.SampleDefaultVO;
 import egovframework.example.sample.service.SampleVO;
@@ -65,7 +73,53 @@ public class EgovSampleController {
 
 	/** Validator */
 	private final DefaultBeanValidator beanValidator;
+	/**
+     * AJAX 목록 조회 (JSON 응답)
+     */
+    @RequestMapping(value = "/egovSampleListAjax.do")
+    @ResponseBody // 리턴되는 Map을 JSON 구조로 자동 변환 (Jackson 라이브러리 필요)
+    public ResponseEntity<?> selectSampleListAjax(@ModelAttribute("searchVO") SampleDefaultVO searchVO) {
+        
+        Map<String, Object> resultMap = new HashMap<>();
+        
+        try {
+            /** 1. 페이징 설정 (전자정부 표준) */
+            searchVO.setPageUnit(10); // 한 페이지에 보여줄 개수
+            searchVO.setPageSize(5);  // 페이징 네비게이션 크기
+            
+            PaginationInfo paginationInfo = new PaginationInfo();
+            paginationInfo.setCurrentPageNo(searchVO.getPageIndex());
+            paginationInfo.setRecordCountPerPage(searchVO.getPageUnit());
+            paginationInfo.setPageSize(searchVO.getPageSize());
+            
+            searchVO.setFirstIndex(paginationInfo.getFirstRecordIndex());
+            searchVO.setLastIndex(paginationInfo.getLastRecordIndex());
+            searchVO.setRecordCountPerPage(paginationInfo.getRecordCountPerPage());
+            
+            log.info("searchVO {} " , searchVO.getSearchCondition() , searchVO);
+            
+            
+            /** 2. 데이터 조회 */
+            List<?> sampleList = sampleService.selectSampleList(searchVO);
+            int totCnt = sampleService.selectSampleListTotCnt(searchVO);
+            paginationInfo.setTotalRecordCount(totCnt);
+            
+            /** 3. 결과 Map에 담기 */
+            resultMap.put("resultList", sampleList);
+            resultMap.put("paginationInfo", paginationInfo);
+            resultMap.put("searchVO", searchVO);
+            resultMap.put("result", "SUCCESS");
 
+            ObjectMapper mapper = new ObjectMapper();
+
+            return new ResponseEntity<>( mapper.writeValueAsString( resultMap ), HttpStatus.OK);
+            
+        } catch (Exception e) {
+            resultMap.put("result", "FAIL");
+            resultMap.put("message", e.getMessage());
+            return new ResponseEntity<>( resultMap, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 	/**
 	 * 글 목록을 조회한다. (pageing)
 	 * @param searchVO - 조회할 정보가 담긴 SampleDefaultVO
