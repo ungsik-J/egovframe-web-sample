@@ -133,7 +133,8 @@ public class EgovSampleController {
         }
     }
     
-    @RequestMapping(value = "/updateEgovSampleAjax.do")
+    @SuppressWarnings("unused")
+	@RequestMapping(value = "/updateEgovSampleAjax.do")
     @ResponseBody
     public Map<String, Object> updateEgovSampleAjax(MultipartHttpServletRequest multiRequest, HttpServletRequest request) throws Exception {
         Map<String, Object> resultMap = new HashMap<>();
