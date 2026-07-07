@@ -9,9 +9,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>egovframe-web-sample</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link type="text/css" rel="stylesheet" href="<c:url value='/css/egovframework/index.css'/>" />
-<link type="text/css" rel="stylesheet" href="<c:url value='/css/egovframework/modern.css'/>" />
+<link
+	href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+	rel="stylesheet">
+<link type="text/css" rel="stylesheet"
+	href="<c:url value='/css/egovframework/index.css'/>" />
+<link type="text/css" rel="stylesheet"
+	href="<c:url value='/css/egovframework/modern.css'/>" />
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 </head>
 <body>
@@ -30,15 +34,23 @@
                     <polyline points="12 5 19 12 12 19"></polyline>
                 </svg>
 			</a>
-
+			<br/>
+			<br/>
+			<a class="btn-primary" href="/datatables-dynamic-columns-sample.do"> 동적 컬럼 생성 예제 <svg
+					viewBox="0 0 24 24" fill="none" stroke="currentColor"
+					stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                    <polyline points="12 5 19 12 12 19"></polyline>
+                </svg>
+			</a>
 			<div class="footer-note">egovframe-web-sample</div>
 		</div>
 	</div>
 
 	<script type="text/javascript">
-        $(function() {
+		$(function() {
 
-        });
-    </script>
+		});
+	</script>
 </body>
 </html>

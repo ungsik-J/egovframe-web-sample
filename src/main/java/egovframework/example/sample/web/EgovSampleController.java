@@ -40,6 +40,7 @@ import org.springframework.ui.ModelMap;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -89,6 +90,15 @@ public class EgovSampleController {
 	@Autowired
 	private final MapKeyConverter mapKeyConverter;
 
+    @GetMapping("/datatables-dynamic-columns-sample.do")
+    public String dynamicPageMapping() {
+        
+    	log.info("dynamicPageMapping : {}");
+       
+        // 들어온 URL 값(pageName)을 그대로 HTML 파일명으로 지정하여 동적 이동
+        return "sample/datatables-dynamic-columns-sample"; 
+    }
+	
 	/**
 	 * AJAX 목록 조회 (JSON 응답)
 	 */
