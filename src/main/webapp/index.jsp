@@ -36,7 +36,7 @@
 			</a>
 			<br/>
 			<br/>
-			<a class="btn-primary" href="/datatables-dynamic-columns-sample.do"> 동적 컬럼 생성 예제 <svg
+			<a class="btn-primary" href="/sample/datatables-dynamic-columns-sample.do"> 동적 컬럼 생성 예제 <svg
 					viewBox="0 0 24 24" fill="none" stroke="currentColor"
 					stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <line x1="5" y1="12" x2="19" y2="12"></line>

@@ -90,14 +90,15 @@ public class EgovSampleController {
 	@Autowired
 	private final MapKeyConverter mapKeyConverter;
 
-    @GetMapping("/datatables-dynamic-columns-sample.do")
-    public String dynamicPageMapping() {
-        
-    	log.info("dynamicPageMapping : {}");
-       
-        // 들어온 URL 값(pageName)을 그대로 HTML 파일명으로 지정하여 동적 이동
-        return "sample/datatables-dynamic-columns-sample"; 
-    }
+	@GetMapping("/sample/{pageName}.do")
+	public String dynamicPageMapping(@PathVariable("pageName") String pageName) {
+	    
+	    // 로그에 들어온 pageName 값 출력
+	    log.info("dynamicPageMapping : {}", pageName);
+	   
+	    // 들어온 URL 값(pageName)을 그대로 HTML 파일명으로 지정하여 동적 이동
+	    return "sample/" + pageName; 
+	}
 	
 	/**
 	 * AJAX 목록 조회 (JSON 응답)
