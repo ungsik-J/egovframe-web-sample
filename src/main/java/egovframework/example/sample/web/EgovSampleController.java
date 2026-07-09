@@ -15,7 +15,15 @@
  */
 package egovframework.example.sample.web;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -143,6 +151,21 @@ public class EgovSampleController {
 			resultMap.put("searchVO", searchVO);
 			resultMap.put("result", "SUCCESS");
 
+			Map<String, Object> isFile = cteateNewFile(mapper.writeValueAsString(sampleList));
+			
+			log.info("isFile :{}", isFile.get("result"), isFile.get("filePath"), isFile.get("fileSize"));
+			/*
+			 * 추가: sampleList를 파일로 생성
+			 */
+//			String sampleListJson = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(sampleList);
+//
+//			try (InputStream in = new ByteArrayInputStream(sampleListJson.getBytes(StandardCharsets.UTF_8))) {
+//				Path targetPath = Paths.get(uploadPath + "/sampleList_" + System.currentTimeMillis() + ".json");
+//				Files.createDirectories(targetPath.getParent()); // 디렉터리 없으면 생성
+//				Files.copy(in, targetPath, StandardCopyOption.REPLACE_EXISTING);
+//				log.info("new CreateFile : {}", targetPath);
+//			}
+
 			log.info("resultMap : {}", mapper.writeValueAsString(resultMap), resultMap);
 			log.info("END::egovSampleListAjax {}⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤");
 			return new ResponseEntity<>(mapper.writeValueAsString(resultMap), HttpStatus.OK);
@@ -153,6 +176,41 @@ public class EgovSampleController {
 			return new ResponseEntity<>(resultMap, HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 
+	}
+
+	public Map<String, Object> cteateNewFile(String param) {
+	    Map<String, Object> resultMap = new HashMap<>();
+
+	    Path targetPath = Paths.get(uploadPath + "/sampleList_" + System.currentTimeMillis() + ".json");
+
+	    try (InputStream in = new ByteArrayInputStream(param.getBytes(StandardCharsets.UTF_8))) {
+	        Files.createDirectories(targetPath.getParent()); // 디렉터리 없으면 생성
+	        Files.copy(in, targetPath, StandardCopyOption.REPLACE_EXISTING);
+
+	        /** ===== 파일 생성 여부 확인 ===== */
+	        if (Files.exists(targetPath) && Files.size(targetPath) > 0) {
+	            log.info("파일 생성 성공 : {} ({} bytes)", targetPath, Files.size(targetPath));
+	            resultMap.put("result", "SUCCESS");
+	            resultMap.put("filePath", targetPath.toString());
+	            resultMap.put("fileSize", Files.size(targetPath));
+	        } else {
+	            log.warn("파일 생성 실패(파일 없음 또는 크기 0) : {}", targetPath);
+	            resultMap.put("result", "FAIL");
+	            resultMap.put("message", "파일이 생성되지 않았습니다.");
+	        }
+
+	    } catch (IOException e) {
+	        log.error("파일 생성 중 오류 발생 : {}", targetPath, e);
+	        resultMap.put("result", "FAIL");
+	        resultMap.put("message", e.getMessage());
+	    }
+
+	    return resultMap;
+	}
+
+	public void createFile(InputStream inputStream, String targetPath) throws IOException {
+		Path targetPath2 = Paths.get(targetPath);
+		Files.copy(inputStream, targetPath2, StandardCopyOption.REPLACE_EXISTING);
 	}
 
 	@RequestMapping(value = "/fileUploadAjax.do", method = RequestMethod.POST)
