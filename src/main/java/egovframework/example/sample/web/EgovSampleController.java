@@ -151,12 +151,9 @@ public class EgovSampleController {
 			resultMap.put("searchVO", searchVO);
 			resultMap.put("result", "SUCCESS");
 
-			Map<String, Object> isFile = cteateNewFile(mapper.writeValueAsString(sampleList));
-			
-			log.info("isFile :{}", isFile.get("result"), isFile.get("filePath"), isFile.get("fileSize"));
-			/*
-			 * 추가: sampleList를 파일로 생성
-			 */
+//			Map<String, Object> isFile = cteateNewFile(mapper.writeValueAsString(sampleList));
+//			log.info("isFile :{}", isFile.get("result"), isFile.get("filePath"), isFile.get("fileSize"));
+
 //			String sampleListJson = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(sampleList);
 //
 //			try (InputStream in = new ByteArrayInputStream(sampleListJson.getBytes(StandardCharsets.UTF_8))) {
@@ -178,6 +175,12 @@ public class EgovSampleController {
 
 	}
 
+	/**
+	 * @category create file
+	 * 
+	 * @param param
+	 * @return
+	 */
 	public Map<String, Object> cteateNewFile(String param) {
 	    Map<String, Object> resultMap = new HashMap<>();
 
@@ -209,8 +212,8 @@ public class EgovSampleController {
 	}
 
 	public void createFile(InputStream inputStream, String targetPath) throws IOException {
-		Path targetPath2 = Paths.get(targetPath);
-		Files.copy(inputStream, targetPath2, StandardCopyOption.REPLACE_EXISTING);
+		Path _targetPath = Paths.get(targetPath);
+		Files.copy(inputStream, _targetPath, StandardCopyOption.REPLACE_EXISTING);
 	}
 
 	@RequestMapping(value = "/fileUploadAjax.do", method = RequestMethod.POST)

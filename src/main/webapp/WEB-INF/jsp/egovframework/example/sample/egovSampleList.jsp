@@ -29,6 +29,19 @@
                     fn_close_modal();
                 }
             });
+            
+            $(function(){
+            	$("#checked_download").click(function(e){
+            		console.log( e.target.checked )
+            		if(e.target.checked){
+            			if(confirm('목록을 다운로드 하시겠습니까?')){
+            				
+            			}else{
+            				e.target.checked = false;
+            			}
+            		}
+            	})
+            })
         });
 
         /* AJAX 목록 조회 함수 */
@@ -157,6 +170,7 @@
                 });
             }
         }
+        
     </script>
 </head>
 <body>
@@ -173,6 +187,7 @@
                 </select>
                 <input type="text" name="searchKeyword" placeholder="검색어를 입력해 주세요..." />
                 <button type="button" class="btn-primary" onclick="fn_select_list();">검색</button>
+                <div><input type="checkbox" id="checked_download" name="checked_download" class="btn-secondary" title="file download"/></div>
             </div>
         </form>
 
