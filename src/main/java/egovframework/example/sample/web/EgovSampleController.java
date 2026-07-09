@@ -16,16 +16,12 @@
 package egovframework.example.sample.web;
 
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.InputStream;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import javax.servlet.http.HttpServletRequest;
-
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.egovframe.rte.fdl.property.EgovPropertyService;
 import org.egovframe.rte.ptl.mvc.tags.ui.pagination.PaginationInfo;
@@ -43,6 +39,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.support.SessionStatus;
@@ -50,6 +47,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
 import org.springmodules.validation.commons.DefaultBeanValidator;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import egovframework.com.cmm.util.MapKeyConverter;
@@ -90,28 +88,31 @@ public class EgovSampleController {
 	@Autowired
 	private final MapKeyConverter mapKeyConverter;
 
+	// 실제 서버 저장 경로 (properties로 분리 권장)
+	private final String uploadPath = "c:/temp/upload/sample/";
+
 	@GetMapping("/sample/{pageName}.do")
 	public String dynamicPageMapping(@PathVariable("pageName") String pageName) {
-	    
-	    // 로그에 들어온 pageName 값 출력
-	    log.info("dynamicPageMapping : {}", pageName);
-	   
-	    // 들어온 URL 값(pageName)을 그대로 HTML 파일명으로 지정하여 동적 이동
-	    return "sample/" + pageName; 
+
+		// 로그에 들어온 pageName 값 출력
+		log.info("dynamicPageMapping : {}", pageName);
+
+		// 들어온 URL 값(pageName)을 그대로 HTML 파일명으로 지정하여 동적 이동
+		return "sample/" + pageName;
 	}
-	
+
 	/**
 	 * AJAX 목록 조회 (JSON 응답)
 	 */
 	@RequestMapping(value = "/egovSampleListAjax.do")
 	@ResponseBody // 리턴되는 Map을 JSON 구조로 자동 변환 (Jackson 라이브러리 필요)
-	public ResponseEntity<?> selectSampleListAjax(@ModelAttribute("searchVO") SampleDefaultVO searchVO) {
-
+	public ResponseEntity<?> egovSampleListAjax(@ModelAttribute("searchVO") SampleDefaultVO searchVO) {
+		log.info("\nSTART::egovSampleListAjax {} ⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥");
 		Map<String, Object> resultMap = new HashMap<>();
 		ObjectMapper mapper = new ObjectMapper();
 		try {
 
-			log.info("\n★START::selectSampleListAjax.searchVO :\n {}", mapper.writeValueAsString(searchVO), searchVO);
+			log.info("\nsearchVO :\n {}", mapper.writeValueAsString(searchVO), searchVO);
 
 			/** 1. 페이징 설정 (전자정부 표준) */
 			searchVO.setPageUnit(10); // 한 페이지에 보여줄 개수
@@ -142,8 +143,8 @@ public class EgovSampleController {
 			resultMap.put("searchVO", searchVO);
 			resultMap.put("result", "SUCCESS");
 
-			log.info("\n★END:::selectSampleListAjax.resultMap :\n {}", mapper.writeValueAsString(resultMap), resultMap);
-
+			log.info("resultMap : {}", mapper.writeValueAsString(resultMap), resultMap);
+			log.info("END::egovSampleListAjax {}⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤");
 			return new ResponseEntity<>(mapper.writeValueAsString(resultMap), HttpStatus.OK);
 
 		} catch (Exception e) {
@@ -151,70 +152,65 @@ public class EgovSampleController {
 			resultMap.put("message", e.getMessage());
 			return new ResponseEntity<>(resultMap, HttpStatus.INTERNAL_SERVER_ERROR);
 		}
+
 	}
 
-	@SuppressWarnings("unused")
-	@RequestMapping(value = "/updateEgovSampleAjax.do")
+	@RequestMapping(value = "/fileUploadAjax.do", method = RequestMethod.POST)
 	@ResponseBody
-	public Map<String, Object> updateEgovSampleAjax(MultipartHttpServletRequest multiRequest,
-			HttpServletRequest request) throws Exception {
-		Map<String, Object> resultMap = new HashMap<>();
+	public Map<String, Object> fileUploadAjax(MultipartHttpServletRequest multipartRequest) {
+		log.info("\nSTART::fileUploadAjax {} ⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥");
+		ObjectMapper objectMapper = new ObjectMapper();
+		try {
+			log.info("multipartRequest : {}", objectMapper.writeValueAsString(multipartRequest.getParameterMap()));
+		} catch (JsonProcessingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		Map<String, Object> resultMap = new HashMap<String, Object>();
 
 		try {
-			// 1. 파라미터 데이터 확인 (formData에 넣었던 일반 텍스트 데이터 추출 예시)
-			String sampleId = multiRequest.getParameter("id");
-			String sampleName = multiRequest.getParameter("name");
+			String id = multipartRequest.getParameter("id");
+			String name = multipartRequest.getParameter("name");
+			String description = multipartRequest.getParameter("description");
 
-			// TODO: 기존 데이터 수정 비즈니스 로직 수행 (예: sampleService.updateSample(...))
+			MultipartFile uploadFile = multipartRequest.getFile("uploadFile"); // input name과 일치
 
-			// 2. 파일 업로드 처리 (InputStream 활용)
-			Map<String, MultipartFile> files = multiRequest.getFileMap();
-			Iterator<String> tags = files.keySet().iterator();
+			String orgFileName = "";
+			String saveFileName = "";
 
-			// 저장할 파일 경로 설정 (서버 환경에 맞게 수정 필요)
-			String uploadPath = request.getServletContext().getRealPath("/upload/");
-			File saveDir = new File(uploadPath);
-			if (!saveDir.exists()) {
-				saveDir.mkdirs(); // 디렉토리가 없으면 생성
-			}
+			if (uploadFile != null && !uploadFile.isEmpty()) {
+				orgFileName = uploadFile.getOriginalFilename();
+				String ext = FilenameUtils.getExtension(orgFileName);
+				saveFileName = UUID.randomUUID().toString() + "." + ext;
 
-			while (tags.hasNext()) {
-				String tagName = tags.next();
-				MultipartFile multipartFile = files.get(tagName);
-
-				if (multipartFile != null && !multipartFile.isEmpty()) {
-					String originalFileName = multipartFile.getOriginalFilename();
-					// 파일명 중복 방지를 위한 UUID 적용
-					String savedFileName = UUID.randomUUID().toString() + "_" + originalFileName;
-
-					File targetFile = new File(uploadPath + File.separator + savedFileName);
-
-					// 핵심: InputStream을 열어서 파일 저장 처리
-					try (InputStream inputStream = multipartFile.getInputStream();
-							FileOutputStream outputStream = new FileOutputStream(targetFile)) {
-
-						byte[] buffer = new byte[4096];
-						int bytesRead;
-						while ((bytesRead = inputStream.read(buffer)) != -1) {
-							outputStream.write(buffer, 0, bytesRead);
-						}
-					}
-
-					// (선택) DB에 파일 정보 저장 로직 필요 시 여기에 구현
-					System.out.println("파일 저장 완료: " + targetFile.getAbsolutePath());
+				File dir = new File(uploadPath);
+				if (!dir.exists()) {
+					dir.mkdirs();
 				}
+				uploadFile.transferTo(new File(uploadPath + saveFileName));
 			}
 
-			resultMap.put("result", "SUCCESS");
-			resultMap.put("message", "정상적으로 수정 및 파일 업로드가 완료되었습니다.");
+			Map<String, Object> paramMap = new HashMap<String, Object>();
+			paramMap.put("id", id);
+			paramMap.put("name", name);
+			paramMap.put("description", description);
+			paramMap.put("orgFileName", orgFileName);
+			paramMap.put("fileName", saveFileName);
+			paramMap.put("filePath", uploadPath);
+
+			// sampleService.updateSample(paramMap);
+
+			resultMap.put("resultCode", "success");
+			resultMap.put("resultMsg", "정상적으로 처리되었습니다.");
 
 		} catch (Exception e) {
 			e.printStackTrace();
-			resultMap.put("result", "FAIL");
-			resultMap.put("message", "오류가 발생했습니다: " + e.getMessage());
+			resultMap.put("resultCode", "fail");
+			resultMap.put("resultMsg", e.getMessage());
 		}
-
-		return resultMap; // @ResponseBody에 의해 JSON 형태로 클라이언트에 반환됩니다.
+		log.info("\nEND::fileUploadAjax {}⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤");
+		return resultMap;
 	}
 
 	/**
@@ -226,10 +222,16 @@ public class EgovSampleController {
 	 * @exception Exception
 	 */
 	@GetMapping("/egovSampleList.do")
-	public String selectSampleList(@ModelAttribute("searchVO") SampleDefaultVO searchVO, ModelMap model)
+	public String egovSampleList(@ModelAttribute("searchVO") SampleDefaultVO searchVO, ModelMap model)
 			throws Exception {
-		log.info(
-				"\nSTART::selectSampleList {} ************************************************************************");
+		log.info("\nSTART::egovSampleList {} ⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥");
+		ObjectMapper objectMapper = new ObjectMapper();
+		try {
+			log.info("searchVO : {}", objectMapper.writeValueAsString(searchVO));
+		} catch (JsonProcessingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		/** EgovPropertyService.sample */
 		searchVO.setPageUnit(propertiesService.getInt("pageUnit"));
 		searchVO.setPageSize(propertiesService.getInt("pageSize"));
@@ -250,8 +252,7 @@ public class EgovSampleController {
 		int totCnt = sampleService.selectSampleListTotCnt(searchVO);
 		paginationInfo.setTotalRecordCount(totCnt);
 		model.addAttribute("paginationInfo", paginationInfo);
-		log.info(
-				"\nEND::selectSampleList {} **************************************************************************");
+		log.info("\nEND::egovSampleList {}⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤");
 		return "sample/egovSampleList";
 	}
 
@@ -384,5 +385,4 @@ public class EgovSampleController {
 
 		return "redirect:/egovSampleList.do";
 	}
-
 }

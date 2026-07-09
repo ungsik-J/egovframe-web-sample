@@ -140,7 +140,7 @@
                 $.ajax({
                     type: "POST",
                     enctype: 'multipart/form-data', // 멀티파트 인코딩 설정
-                    url: "<c:url value='/updateEgovSampleAjax.do'/>", // ⚠️ 전자정부 서버 Controller 맵핑 URL에 맞게 수정하세요.
+                    url: "<c:url value='/fileUploadAjax.do'/>", // ⚠️ 전자정부 서버 Controller 맵핑 URL에 맞게 수정하세요.
                     data: formData,
                     processData: false, // jQuery가 데이터를 Query String으로 변환하는 것을 방지
                     contentType: false, // jQuery가 content-type을 자동 설정하도록 방지 (Boundary 자동 생성)
