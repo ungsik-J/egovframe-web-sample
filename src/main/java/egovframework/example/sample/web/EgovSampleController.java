@@ -15,6 +15,7 @@
  */
 package egovframework.example.sample.web;
 
+import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
@@ -24,10 +25,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -74,6 +78,7 @@ import lombok.RequiredArgsConstructor;
  * @author 개발프레임웍크 실행환경 개발팀
  * @since 2009. 03.16
  * @version 1.0
+ * @param <E>
  * @see
  *
  *      Copyright (C) by MOPAS All right reserved.
@@ -81,7 +86,7 @@ import lombok.RequiredArgsConstructor;
 
 @Controller
 @RequiredArgsConstructor
-public class EgovSampleController {
+public class EgovSampleController<E> {
 	private static final Logger log = LoggerFactory.getLogger(EgovSampleController.class);
 	/** EgovSampleService */
 	private final EgovSampleService sampleService;
@@ -151,18 +156,43 @@ public class EgovSampleController {
 			resultMap.put("searchVO", searchVO);
 			resultMap.put("result", "SUCCESS");
 
-//			Map<String, Object> isFile = cteateNewFile(mapper.writeValueAsString(sampleList));
-//			log.info("isFile :{}", isFile.get("result"), isFile.get("filePath"), isFile.get("fileSize"));
 
-//			String sampleListJson = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(sampleList);
-//
-//			try (InputStream in = new ByteArrayInputStream(sampleListJson.getBytes(StandardCharsets.UTF_8))) {
-//				Path targetPath = Paths.get(uploadPath + "/sampleList_" + System.currentTimeMillis() + ".json");
-//				Files.createDirectories(targetPath.getParent()); // 디렉터리 없으면 생성
-//				Files.copy(in, targetPath, StandardCopyOption.REPLACE_EXISTING);
-//				log.info("new CreateFile : {}", targetPath);
-//			}
+			List<SampleVO> writeobj = new ArrayList<>();
+			List<?> sampleListAll = sampleService.selectSampleListAll(searchVO);
 
+			for (int i = 0; i < 5; i++) {
+			    for (Object item : sampleListAll) {
+			    	
+			        if (item instanceof Map) {
+			            Map<?, ?> map = (Map<?, ?>) item;
+			            SampleVO sampleVO = new SampleVO();   // ★ 반복마다 새 객체 생성
+
+			            for (Map.Entry<?, ?> entry : map.entrySet()) {
+			                Object key = entry.getKey();
+			                Object value = entry.getValue();
+
+			                if ("id".equals(key)) {
+			                    sampleVO.setId("[" + StringUtils.rightPad((String) value , 600, "") + "]");
+			                } else if ("name".equals(key)) {
+			                    sampleVO.setName("[" + StringUtils.rightPad((String) value , 1010, "") + "]");
+			                } else if ("description".equals(key)) {
+			                    sampleVO.setDescription("[" + StringUtils.rightPad((String) value , 500, "") + "]");
+			                }
+			            }
+
+			            writeobj.add(sampleVO);   // ★ 매번 새 객체를 add
+			        }
+			    }
+			}
+			
+			List<String> valueLineList = writeobj.stream()
+			        .map(vo -> vo.getId() + vo.getName() + vo.getDescription())
+			        .collect(Collectors.toList());
+
+			Map<String, Object> isFileAll = createNewFileByLine(valueLineList);
+			
+			log.info("isFileAll :: \nresult:{}, \nfileSize:{}, \nrecordCount:{} ", isFileAll.get("result"), isFileAll.get("fileSize") , isFileAll.get("recordCount"));
+			
 			log.info("resultMap : {}", mapper.writeValueAsString(resultMap), resultMap);
 			log.info("END::egovSampleListAjax {}⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤");
 			return new ResponseEntity<>(mapper.writeValueAsString(resultMap), HttpStatus.OK);
@@ -174,7 +204,56 @@ public class EgovSampleController {
 		}
 
 	}
+	
+	/**
+	 * @category 리스트의 각 객체를 JSON으로 변환하여, 한 줄에 1건씩 파일로 저장 (JSON Lines 형식)
+	 *
+	 * @param list 저장할 객체 리스트
+	 * @return 저장 결과 정보
+	 */
+	public Map<String, Object> createNewFileByLine(List<?> list) {
+	    Map<String, Object> resultMap = new HashMap<>();
+	    ObjectMapper mapper = new ObjectMapper();
 
+	    Path targetPath = Paths.get(uploadPath, "sampleListAllWriteFile");
+
+	    log.info("START::currentTimeMillis{}" , System.currentTimeMillis());
+	    try {
+	        Files.createDirectories(targetPath.getParent());
+
+	        try (BufferedWriter writer = Files.newBufferedWriter(
+	                targetPath, StandardCharsets.UTF_8, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
+
+	            for (Object item : list) {
+	                // ★ String이면 큰따옴표 없이 그대로, 아니면 JSON 직렬화
+	                String line = (item instanceof String) ? (String) item : mapper.writeValueAsString(item);
+	                writer.write(line);
+	                writer.newLine();
+	            }
+	        }
+
+	        if (Files.exists(targetPath) && Files.size(targetPath) > 0) {
+	            log.info("파일 생성 성공 : {} ({} bytes, {} records)", targetPath, Files.size(targetPath), list.size());
+	            resultMap.put("result", "SUCCESS");
+	            resultMap.put("filePath", targetPath.toString());
+	            resultMap.put("fileSize", Files.size(targetPath));
+	            resultMap.put("recordCount", list.size());
+	        } else {
+	            log.warn("파일 생성 실패(파일 없음 또는 크기 0) : {}", targetPath);
+	            resultMap.put("result", "FAIL");
+	            resultMap.put("message", "파일이 생성되지 않았습니다.");
+	        }
+
+	    } catch (IOException e) {
+	        log.error("파일 생성 중 오류 발생 : {}", targetPath, e);
+	        resultMap.put("result", "FAIL");
+	        resultMap.put("message", e.getMessage());
+	    }
+	    
+	    log.info("END::currentTimeMillis{}" , System.currentTimeMillis());
+	    
+	    return resultMap;
+	}
 	/**
 	 * @category create file
 	 * 

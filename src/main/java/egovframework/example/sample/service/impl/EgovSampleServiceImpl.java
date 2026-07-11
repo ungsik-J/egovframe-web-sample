@@ -16,6 +16,7 @@
 package egovframework.example.sample.service.impl;
 
 import java.util.List;
+import java.util.Map;
 
 import org.egovframe.rte.fdl.cmmn.EgovAbstractServiceImpl;
 import org.egovframe.rte.fdl.idgnr.EgovIdGnrService;
@@ -122,7 +123,16 @@ public class EgovSampleServiceImpl extends EgovAbstractServiceImpl implements Eg
 	public List<?> selectSampleList(SampleDefaultVO searchVO) throws Exception {
 		return sampleDAO.selectSampleList(searchVO);
 	}
-
+	/**
+	 * 글 목록을 조회한다.
+	 * @param searchVO - 조회할 정보가 담긴 VO
+	 * @return 글 목록
+	 * @exception Exception
+	 */
+	@Override
+	public List<?> selectSampleListAll(SampleDefaultVO searchVO) throws Exception {
+		return sampleDAO.selectSampleListAll(searchVO);
+	}
 	/**
 	 * 글 총 갯수를 조회한다.
 	 * @param searchVO - 조회할 정보가 담긴 VO
@@ -134,4 +144,9 @@ public class EgovSampleServiceImpl extends EgovAbstractServiceImpl implements Eg
 		return sampleDAO.selectSampleListTotCnt(searchVO);
 	}
 
+	@Override
+	public void selectSampleListAll(SampleDefaultVO searchVO, Object object) {
+		// TODO Auto-generated method stub
+		
+	}
 }

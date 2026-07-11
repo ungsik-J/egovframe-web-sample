@@ -16,6 +16,7 @@
 package egovframework.example.sample.service.impl;
 
 import java.util.List;
+import java.util.Map;
 
 import egovframework.example.sample.service.SampleDefaultVO;
 import egovframework.example.sample.service.SampleVO;
@@ -79,6 +80,7 @@ public interface SampleMapper {
 	 * @exception Exception
 	 */
 	List<?> selectSampleList(SampleDefaultVO searchVO) throws Exception;
+	List<?> selectSampleListAll(SampleDefaultVO searchVO) throws Exception;
 
 	/**
 	 * 글 총 갯수를 조회한다.
