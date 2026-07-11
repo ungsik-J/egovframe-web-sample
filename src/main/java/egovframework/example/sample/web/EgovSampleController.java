@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import org.apache.catalina.util.StringUtil;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.egovframe.rte.fdl.property.EgovPropertyService;
@@ -114,82 +115,73 @@ public class EgovSampleController<E> {
 		return "sample/" + pageName;
 	}
 
+	
 	public Map<String, Object> createChunkFile(List<?> param) throws IOException {
-
-		Map<String, Object> resultMap = new HashMap<>();
-		String createFilePath = "C:/Temp/upload/sample/chunkFile";
-		long recordCount = 0;
-		int chunkCount = 0;
-		log.info("START::createChunkFile--------------------------------------------------------------------------->>");
-		log.info("currentTimeMillis{}",System.currentTimeMillis());
-		// ★ 리스트 3개(writeobj, valueLineList) 만들지 않고 바로 파일에 씀
-		try (BufferedWriter writer = new BufferedWriter(
-				new OutputStreamWriter(new FileOutputStream(createFilePath), StandardCharsets.UTF_8),
-				1024 * 1024)) {
-
-			StringBuilder sb = new StringBuilder();
-
-			for (Object item : param) {
-				if (!(item instanceof Map)) {
-					continue;
-				}
-				Map<?, ?> map = (Map<?, ?>) item;
-
-				String id = "";
-				String name = "";
-				String description = "";
-
-				for (Map.Entry<?, ?> entry : map.entrySet()) {
-					Object key = entry.getKey();
-					Object value = entry.getValue();
-
-					if ("id".equals(key)) {
-						id = "[" + StringUtils.rightPad((String) value, 600, "") + "]";
-					} else if ("name".equals(key)) {
-						name = "[" + StringUtils.rightPad((String) value, 1010, "") + "]";
-					} else if ("description".equals(key)) {
-						description = "[" + StringUtils.rightPad((String) value, 500, "") + "]";
-					}
-				}
-
-				sb.append(id).append(name).append(description).append(System.lineSeparator());
-				recordCount++;
-				chunkCount++;
-
-				// 1000건마다 파일에 flush 하고 StringBuilder 비움 (메모리 누적 방지)
-				if (chunkCount >= 1000) {
-					writer.write(sb.toString());
-					sb.setLength(0);
-					chunkCount = 0;
-				}
-			}
-
-			// 남은 데이터 마저 쓰기
-			if (sb.length() > 0) {
-				writer.write(sb.toString());
-			}
-
-			writer.flush();
-
-		} catch (IOException e) {
-			e.printStackTrace();
-			resultMap.put("result", "fail");
-			return resultMap;
-		} finally {
-			// ★ 큰 리스트는 다 쓴 뒤 참조 해제 (GC 대상이 되도록)
-			param = null;
-			resultMap.put("result", "success");
-			resultMap.put("chunkCount", chunkCount);
-			resultMap.put("recordCount", recordCount);
-			resultMap.put("createFilePath", createFilePath);
-		}
-
-		log.info("파일 저장 완료 :: createFilePath:{}, recordCount:{}, chunkCount:{}", createFilePath, recordCount, chunkCount);
-		log.info("currentTimeMillis{}",System.currentTimeMillis());
-		log.info("END::createChunkFile----------------------------------------------------------------------------->>");
-
-		return resultMap;
-
+	    Map<String, Object> resultMap = new HashMap<>();
+	    String createFilePath = "C:/Temp/upload/sample/chunkFile";
+	    File file = new File(createFilePath);
+	    File parentDir = file.getParentFile();
+	    if (parentDir != null && !parentDir.exists()) {
+	    	parentDir.delete();
+	        parentDir.mkdirs();
+	    }
+	    long recordCount = 0;
+	    int chunkCount = 0;
+	    log.info("START::createChunkFile--------------------------------------------------------------------------->>");
+	    log.info("currentTimeMillis{}",System.currentTimeMillis());
+	    // ★ 리스트 3개(writeobj, valueLineList) 만들지 않고 바로 파일에 씀
+	    try (BufferedWriter writer = new BufferedWriter(
+	            new OutputStreamWriter(new FileOutputStream(createFilePath), StandardCharsets.UTF_8),
+	            1024 * 1024)) {
+	        StringBuilder sb = new StringBuilder();
+	        for (Object item : param) {
+	            if (!(item instanceof Map)) {
+	                continue;
+	            }
+	            Map<?, ?> map = (Map<?, ?>) item;
+	            String id = "";
+	            String name = "";
+	            String description = "";
+	            for (Map.Entry<?, ?> entry : map.entrySet()) {
+	                Object key = entry.getKey();
+	                Object value = entry.getValue();
+	                if ("id".equals(key)) {
+	                    id = "[" + StringUtils.rightPad((String) value, 600, "") + "]";
+	                } else if ("name".equals(key)) {
+	                    name = "[" + StringUtils.rightPad((String) value, 1010, "") + "]";
+	                } else if ("description".equals(key)) {
+	                    description = "[" + StringUtils.rightPad((String) value, 500, "") + "]";
+	                }
+	            }
+	            sb.append(id).append(name).append(description).append(System.lineSeparator());
+	            recordCount++;
+	            chunkCount++;
+	            // 1000건마다 파일에 flush 하고 StringBuilder 비움 (메모리 누적 방지)
+	            if (chunkCount >= 1000) {
+	                writer.write(sb.toString());
+	                sb.setLength(0);
+	                chunkCount = 0;
+	            }
+	        }
+	        // 남은 데이터 마저 쓰기
+	        if (sb.length() > 0) {
+	            writer.write(sb.toString());
+	        }
+	    } catch (IOException e) {
+	        e.printStackTrace();
+	        resultMap.put("result", "fail");
+	        return resultMap;
+	    } finally {
+	        // ★ 큰 리스트는 다 쓴 뒤 참조 해제 (GC 대상이 되도록)
+	        param = null;
+	        resultMap.put("result", "success");
+	        resultMap.put("chunkCount", chunkCount);
+	        resultMap.put("recordCount", recordCount);
+	        resultMap.put("createFilePath", createFilePath);
+	    }
+	    log.info("파일 저장 완료 :: createFilePath:{}, recordCount:{}, chunkCount:{}", createFilePath, recordCount, chunkCount);
+	    log.info("currentTimeMillis{}",System.currentTimeMillis());
+	    return resultMap;
 	}
 
 	@RequestMapping(value = "/egovSampleListAjaxDownload.do")
