@@ -1,13 +1,17 @@
 package egovframework.example.sample;
 
 import java.io.BufferedWriter;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.util.ArrayList;
+import java.sql.Date;
+import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -20,18 +24,50 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class HelloWorld {
 	private static final Logger log = LoggerFactory.getLogger(HelloWorld.class);
 	private final static String uploadPath = "c:/temp/upload/sample/";
-	public static <E> void main(String[] args) {
-		// TODO Auto-generated method stub
-		ArrayList<E> createDATA = new ArrayList<E>();
-		for(int i = 0; i < 999999; i++) {
-			String txt = "SAMPLE-"+i+",Runtime Environment_"+i+",Presentation Layer"+i+",Y,eGov";
-			
-			createDATA.add((E) txt);
-			
-		}
-		
-		Map<String, Object> isFileAll = createNewFileByLine(createDATA);
+	public static void main(String[] args) throws IOException {
+		runCreateSampleData();
 	}
+	
+	public static void runCreateSampleData() throws FileNotFoundException, IOException {
+		String filePath = "C:/Temp/upload/sample/sampleData_999999.csv";
+		SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
+		long startTime = System.currentTimeMillis();
+		log.info("startTime : {}", sdf.format(new Date(startTime)));
+	    try (BufferedWriter writer = new BufferedWriter(
+	            new OutputStreamWriter(new FileOutputStream(filePath), StandardCharsets.UTF_8),
+	            1024 * 1024)) {
+
+	        StringBuilder sb = new StringBuilder(1000 * 100);
+	        int chunkCount = 0;
+	        sb.append("ID,NAME,DESCRIPTION,USE_YN,REG_USER");
+	        sb.append(System.lineSeparator());
+	        for (int i = 0; i < 999999; i++) {
+	            sb.append("SAMPLE-").append(i)
+	              .append(",Runtime Environment_").append(i)
+	              .append(",Presentation Layer").append(i)
+	              .append(",Y,eGov")
+	              .append(System.lineSeparator());
+
+	            chunkCount++;
+	            if (chunkCount >= 1000) {
+	                writer.write(sb.toString());
+	                sb.setLength(0);
+	                chunkCount = 0;
+	            }
+	        }
+	        if (sb.length() > 0) {
+	            writer.write(sb.toString());
+	        }
+	        
+			long endTime = System.currentTimeMillis();
+			long elapsedMillis = endTime - startTime;
+			// 소요시간(기간)은 시:분:초 형식으로 별도 변환
+			String elapsedFormatted = String.format("%02d:%02d:%02d", (elapsedMillis / 1000) / 3600,
+					((elapsedMillis / 1000) % 3600) / 60, (elapsedMillis / 1000) % 60);
+			log.info("endTime : {}, elapsedTime : {}", sdf.format(new Date(endTime)), elapsedFormatted);
+	    }
+	}
+	
 	/**
 	 * @category 리스트의 각 객체를 JSON으로 변환하여, 한 줄에 1건씩 파일로 저장 (JSON Lines 형식)
 	 *

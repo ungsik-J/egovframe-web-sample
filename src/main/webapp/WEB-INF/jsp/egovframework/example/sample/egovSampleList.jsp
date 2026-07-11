@@ -40,12 +40,15 @@
                             data: null,
                             dataType: "json",
                             cache: false,
-                            success: function(data) {
+                            success: function(result) {
                                 
-                            	console.log( data )
+                            	console.log( result )
                                 
                             },
                             error: function(xhr, status, error) {
+                            	console.error( xhr )
+                            	console.error( status )
+                            	console.error( error )
                                 //alert("데이터를 불러오는 중 오류가 발생했습니다.");
                             }
                         });

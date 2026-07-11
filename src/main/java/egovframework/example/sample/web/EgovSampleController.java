@@ -22,7 +22,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
-import java.io.RandomAccessFile;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -35,9 +34,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.egovframe.rte.fdl.property.EgovPropertyService;
@@ -120,158 +116,118 @@ public class EgovSampleController<E> {
 	}
 
 	public Map<String, Object> createChunkFile(List<?> param) throws IOException {
-	    Map<String, Object> resultMap = new HashMap<>();
-	    String createFilePath = "C:/Temp/upload/sample/chunkFile";
-	    File file = new File(createFilePath);
-	    File parentDir = file.getParentFile();
-	    if (parentDir != null && !parentDir.exists()) {
-	        parentDir.mkdirs();
-	    }
-	    long recordCount = 0;
-	    int chunkCount = 0;
-	    boolean isFirstLine = true; // ★ 전체 데이터 기준 첫 줄 여부 (청크와 무관하게 한 번만 true)
-	    SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
+		Map<String, Object> resultMap = new HashMap<>();
+		String createFilePath = "C:/Temp/upload/sample/chunkFile";
+		File file = new File(createFilePath);
+		File parentDir = file.getParentFile();
+		if (parentDir != null && !parentDir.exists()) {
+			parentDir.mkdirs();
+		}
+		long recordCount = 0;
+		int chunkCount = 0;
+		boolean isFirstLine = true; // ★ 전체 데이터 기준 첫 줄 여부 (청크와 무관하게 한 번만 true)
+		SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
 
-	    log.info("START::createChunkFile--------------------------------------------------------------------------->>");
-	    long startTime = System.currentTimeMillis();
-	    log.info("startTime : {}", sdf.format(new Date(startTime)));
+		log.info("START::createChunkFile--------------------------------------------------------------------------->>");
+		long startTime = System.currentTimeMillis();
+		log.info("startTime : {}", sdf.format(new Date(startTime)));
 
-	    // ★ 리스트 3개(writeobj, valueLineList) 만들지 않고 바로 파일에 씀
-	    StringBuilder sb = new StringBuilder(1000 * 2200);
-	    try (BufferedWriter writer = new BufferedWriter(
-	            new OutputStreamWriter(new FileOutputStream(createFilePath), StandardCharsets.UTF_8),
-	            1024 * 1024)) {
+		// ★ 리스트 3개(writeobj, valueLineList) 만들지 않고 바로 파일에 씀
+		StringBuilder sb = new StringBuilder(1000 * 2200);
+		try (BufferedWriter writer = new BufferedWriter(
+				new OutputStreamWriter(new FileOutputStream(createFilePath), StandardCharsets.UTF_8), 1024 * 1024)) {
 
-	        for (Object item : param) {
-	            if (!(item instanceof Map)) {
-	                continue;
-	            }
-	            Map<?, ?> map = (Map<?, ?>) item;
-	            String id = "";
-	            String name = "";
-	            String description = "";
-	            for (Map.Entry<?, ?> entry : map.entrySet()) {
-	                Object key = entry.getKey();
-	                Object value = entry.getValue();
-	                if ("id".equals(key)) {
-	                    id = "[" + StringUtils.rightPad((String) value, 10, "") + "]";
-	                } else if ("name".equals(key)) {
-	                    name = "[" + StringUtils.rightPad((String) value, 300, "") + "]";
-	                } else if ("description".equals(key)) {
-	                    description = "[" + StringUtils.rightPad((String) value, 20, "") + "]";
-	                }
-	            }
+			for (Object item : param) {
+				if (!(item instanceof Map)) {
+					continue;
+				}
+				Map<?, ?> map = (Map<?, ?>) item;
+				String id = "";
+				String name = "";
+				String description = "";
+				for (Map.Entry<?, ?> entry : map.entrySet()) {
+					Object key = entry.getKey();
+					Object value = entry.getValue();
+					if ("id".equals(key)) {
+						id = "[" + StringUtils.rightPad((String) value, 256, "") + "]";
+					} else if ("name".equals(key)) {
+						name = "[" + StringUtils.rightPad((String) value, 512, "") + "]";
+					} else if ("description".equals(key)) {
+						description = "[" + StringUtils.rightPad((String) value, 1024, "") + "]";
+					}
+				}
 
-	            // ★ 첫 줄이 아니면 "이전 줄과 구분하는 개행"을 먼저 붙임 (줄 뒤가 아니라 줄 앞에 붙이는 방식)
-	            if (!isFirstLine) {
-	                sb.append(System.lineSeparator());
-	            }
-	            sb.append(id).append(name).append(description);
-	            isFirstLine = false;
+				// ★ 첫 줄이 아니면 "이전 줄과 구분하는 개행"을 먼저 붙임 (줄 뒤가 아니라 줄 앞에 붙이는 방식)
+				if (!isFirstLine) {
+					sb.append(System.lineSeparator());
+				}
+				sb.append(id).append(name).append(description);
+				isFirstLine = false;
 
-	            recordCount++;
-	            chunkCount++;
-	            // 1000건마다 파일에 flush 하고 StringBuilder 비움 (메모리 누적 방지)
-	            if (chunkCount >= 1000) {
-	                writer.write(String.valueOf(sb));
-	                sb.setLength(0);
-	                chunkCount = 0;
-	            }
-	        }
-	        log.info("length:{}", sb.length());
-	        // 남은 데이터 마저 쓰기
-	        if (sb.length() > 0) {
-	            writer.write(String.valueOf(sb));
-	        }
+				recordCount++;
+				chunkCount++;
+				// 1000건마다 파일에 flush 하고 StringBuilder 비움 (메모리 누적 방지)
+				if (chunkCount >= 1000) {
+					writer.write(String.valueOf(sb));
+					sb.setLength(0);
+					chunkCount = 0;
+				}
+			}
+			log.info("length:{}", sb.length());
+			// 남은 데이터 마저 쓰기
+			if (sb.length() > 0) {
+				writer.write(String.valueOf(sb));
+			}
 
-	    } catch (IOException e) {
-	        e.printStackTrace();
-	        resultMap.put("result", "fail");
-	        return resultMap;
-	    } finally {
-	        // ★ 큰 리스트는 다 쓴 뒤 참조 해제 (GC 대상이 되도록)
-	        param = null;
-	        sb = null;
-	        resultMap.put("result", "success");
-	        resultMap.put("chunkCount", chunkCount);
-	        resultMap.put("recordCount", recordCount);
-	        resultMap.put("createFilePath", createFilePath);
-	    }
+		} catch (IOException e) {
+			e.printStackTrace();
+			resultMap.put("result", "fail");
+			return resultMap;
+		} finally {
+			// ★ 큰 리스트는 다 쓴 뒤 참조 해제 (GC 대상이 되도록)
+			param = null;
+			sb = null;
+			resultMap.put("result", "success");
+			resultMap.put("chunkCount", chunkCount);
+			resultMap.put("recordCount", recordCount);
+			resultMap.put("createFilePath", createFilePath);
+		}
 
-	    long endTime = System.currentTimeMillis();
-	    long elapsedMillis = endTime - startTime;
+		long endTime = System.currentTimeMillis();
+		long elapsedMillis = endTime - startTime;
 
-	    // 소요시간(기간)은 시:분:초 형식으로 별도 변환
-	    String elapsedFormatted = String.format("%02d:%02d:%02d",
-	            (elapsedMillis / 1000) / 3600,
-	            ((elapsedMillis / 1000) % 3600) / 60,
-	            (elapsedMillis / 1000) % 60);
+		// 소요시간(기간)은 시:분:초 형식으로 별도 변환
+		String elapsedFormatted = String.format("%02d:%02d:%02d", (elapsedMillis / 1000) / 3600,
+				((elapsedMillis / 1000) % 3600) / 60, (elapsedMillis / 1000) % 60);
 
-	    resultMap.put("startTime", sdf.format(new Date(startTime)));
-	    resultMap.put("endTime", sdf.format(new Date(endTime)));
-	    resultMap.put("elapsedTime", elapsedFormatted);
+		resultMap.put("startTime", sdf.format(new Date(startTime)));
+		resultMap.put("endTime", sdf.format(new Date(endTime)));
+		resultMap.put("elapsedTime", elapsedFormatted);
 
-	    log.info("파일 저장 완료 :: createFilePath:{}, recordCount:{}, chunkCount:{}", createFilePath, recordCount, chunkCount);
-	    log.info("endTime : {}, elapsedTime : {}", sdf.format(new Date(endTime)), elapsedFormatted);
+		log.info("파일 저장 완료 :: createFilePath:{}, recordCount:{}, chunkCount:{}", createFilePath, recordCount,
+				chunkCount);
+		log.info("endTime : {}, elapsedTime : {}", sdf.format(new Date(endTime)), elapsedFormatted);
 
-	    return resultMap;
+		return resultMap;
 	}
 
-    public static void removeLastLine(String filePath) throws IOException {
-        try (RandomAccessFile raf = new RandomAccessFile(filePath, "rw")) {
-            long length = raf.length();
-
-            if (length == 0) {
-                return; // 빈 파일
-            }
-
-            long pos = length - 1;
-
-            // 파일 끝에 개행 문자가 있으면(보통 System.lineSeparator()로 저장했으므로) 먼저 한 칸 건너뜀
-            raf.seek(pos);
-            if (raf.readByte() == '\n') {
-                pos--;
-                if (pos >= 0) {
-                    raf.seek(pos);
-                    if (raf.readByte() == '\r') { // Windows 개행(\r\n) 대응
-                        pos--;
-                    }
-                }
-            }
-
-            // 끝에서부터 역방향으로 개행 문자를 찾음 (그 지점까지가 "마지막 줄 이전" 내용)
-            while (pos >= 0) {
-                raf.seek(pos);
-                byte b = raf.readByte();
-                if (b == '\n') {
-                    break; // 이전 줄의 끝(개행)을 찾음
-                }
-                pos--;
-            }
-
-            // pos가 -1이면 파일에 줄이 하나뿐이었다는 뜻 → 전체 비움
-            long newLength = (pos < 0) ? 0 : pos + 1;
-
-            raf.setLength(newLength); // 그 지점 이후를 잘라냄 (truncate)
-        }
-    }
-    
 	@RequestMapping(value = "/egovSampleListAjaxDownload.do")
 	@ResponseBody
-	public Map<String, Object> egovSampleListAjaxDownload(@ModelAttribute("searchVO") SampleDefaultVO searchVO)
+	public ResponseEntity<?> egovSampleListAjaxDownload(@ModelAttribute("searchVO") SampleDefaultVO searchVO)
 			throws IOException {
-		Map<String, Object> resultMap = new HashMap<>();
 		
-		try {
+		ObjectMapper mapper = new ObjectMapper();
+		Map<String, Object> resultMap = new HashMap<>();
 
-			createChunkFile(sampleService.selectSampleListAll(searchVO));
+		try {
 			
-			
+			resultMap.put("result", String.valueOf( createChunkFile(sampleService.selectSampleListAll(searchVO)) ));
+
 		} catch (Exception e) {
 			e.printStackTrace();
 			resultMap.put("result", "fail");
 		}
-		return resultMap;
+		return new ResponseEntity<>(mapper.writeValueAsString(resultMap), HttpStatus.OK);
 	}
 
 	/**
@@ -427,7 +383,6 @@ public class EgovSampleController<E> {
 		try {
 			log.info("multipartRequest : {}", objectMapper.writeValueAsString(multipartRequest.getParameterMap()));
 		} catch (JsonProcessingException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 
@@ -493,7 +448,6 @@ public class EgovSampleController<E> {
 		try {
 			log.info("searchVO : {}", objectMapper.writeValueAsString(searchVO));
 		} catch (JsonProcessingException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		/** EgovPropertyService.sample */
