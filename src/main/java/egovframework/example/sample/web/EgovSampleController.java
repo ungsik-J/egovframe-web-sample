@@ -114,103 +114,101 @@ public class EgovSampleController<E> {
 		return "sample/" + pageName;
 	}
 
+	public Map<String, Object> createChunkFile(List<?> param) throws IOException {
+
+		Map<String, Object> resultMap = new HashMap<>();
+		String createFilePath = "C:/Temp/upload/sample/chunkFile";
+		long recordCount = 0;
+		int chunkCount = 0;
+		log.info("START::createChunkFile--------------------------------------------------------------------------->>");
+		log.info("currentTimeMillis{}",System.currentTimeMillis());
+		// ★ 리스트 3개(writeobj, valueLineList) 만들지 않고 바로 파일에 씀
+		try (BufferedWriter writer = new BufferedWriter(
+				new OutputStreamWriter(new FileOutputStream(createFilePath), StandardCharsets.UTF_8),
+				1024 * 1024)) {
+
+			StringBuilder sb = new StringBuilder();
+
+			for (Object item : param) {
+				if (!(item instanceof Map)) {
+					continue;
+				}
+				Map<?, ?> map = (Map<?, ?>) item;
+
+				String id = "";
+				String name = "";
+				String description = "";
+
+				for (Map.Entry<?, ?> entry : map.entrySet()) {
+					Object key = entry.getKey();
+					Object value = entry.getValue();
+
+					if ("id".equals(key)) {
+						id = "[" + StringUtils.rightPad((String) value, 600, "") + "]";
+					} else if ("name".equals(key)) {
+						name = "[" + StringUtils.rightPad((String) value, 1010, "") + "]";
+					} else if ("description".equals(key)) {
+						description = "[" + StringUtils.rightPad((String) value, 500, "") + "]";
+					}
+				}
+
+				sb.append(id).append(name).append(description).append(System.lineSeparator());
+				recordCount++;
+				chunkCount++;
+
+				// 1000건마다 파일에 flush 하고 StringBuilder 비움 (메모리 누적 방지)
+				if (chunkCount >= 1000) {
+					writer.write(sb.toString());
+					sb.setLength(0);
+					chunkCount = 0;
+				}
+			}
+
+			// 남은 데이터 마저 쓰기
+			if (sb.length() > 0) {
+				writer.write(sb.toString());
+			}
+
+			writer.flush();
+
+		} catch (IOException e) {
+			e.printStackTrace();
+			resultMap.put("result", "fail");
+			return resultMap;
+		} finally {
+			// ★ 큰 리스트는 다 쓴 뒤 참조 해제 (GC 대상이 되도록)
+			param = null;
+			resultMap.put("result", "success");
+			resultMap.put("chunkCount", chunkCount);
+			resultMap.put("recordCount", recordCount);
+			resultMap.put("createFilePath", createFilePath);
+		}
+
+		log.info("파일 저장 완료 :: createFilePath:{}, recordCount:{}, chunkCount:{}", createFilePath, recordCount, chunkCount);
+		log.info("currentTimeMillis{}",System.currentTimeMillis());
+		log.info("END::createChunkFile----------------------------------------------------------------------------->>");
+
+		return resultMap;
+
+	}
+
 	@RequestMapping(value = "/egovSampleListAjaxDownload.do")
 	@ResponseBody
-	public ResponseEntity<?> egovSampleListAjaxDownload(@ModelAttribute("searchVO") SampleDefaultVO searchVO) {
-	    Map<String, Object> resultMap = new HashMap<>();
-	    ObjectMapper mapper = new ObjectMapper();
-
-	    List<?> sampleListAll = null;
-	    try {
-	        sampleListAll = sampleService.selectSampleListAll(searchVO);
-	    } catch (Exception e) {
-	        e.printStackTrace();
-	        resultMap.put("result", "fail");
-	        try {
-	            return new ResponseEntity<>(mapper.writeValueAsString(resultMap), HttpStatus.INTERNAL_SERVER_ERROR);
-	        } catch (JsonProcessingException ex) {
-	            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-	        }
-	    }
-
-	    //String filePath = "/path/to/output/sample_" + System.currentTimeMillis() + ".txt";
-	    long recordCount = 0;
-
-	    // ★ 리스트 3개(writeobj, valueLineList) 만들지 않고 바로 파일에 씀
-	    try (BufferedWriter writer = new BufferedWriter( new OutputStreamWriter(new FileOutputStream(uploadPath+"listfile"), StandardCharsets.UTF_8), 1024 * 1024)) {
-
-	        StringBuilder sb = new StringBuilder();
-	        int chunkCount = 0;
-
-	        for (Object item : sampleListAll) {
-	            if (!(item instanceof Map)) {
-	                continue;
-	            }
-	            Map<?, ?> map = (Map<?, ?>) item;
-
-	            String id = "";
-	            String name = "";
-	            String description = "";
-
-	            for (Map.Entry<?, ?> entry : map.entrySet()) {
-	                Object key = entry.getKey();
-	                Object value = entry.getValue();
-
-	                if ("id".equals(key)) {
-	                    id = "[" + StringUtils.rightPad((String) value, 600, "") + "]";
-	                } else if ("name".equals(key)) {
-	                    name = "[" + StringUtils.rightPad((String) value, 1010, "") + "]";
-	                } else if ("description".equals(key)) {
-	                    description = "[" + StringUtils.rightPad((String) value, 500, "") + "]";
-	                }
-	            }
-
-	            sb.append(id).append(name).append(description).append(System.lineSeparator());
-	            recordCount++;
-	            chunkCount++;
-
-	            // 1000건마다 파일에 flush 하고 StringBuilder 비움 (메모리 누적 방지)
-	            if (chunkCount >= 1000) {
-	                writer.write(sb.toString());
-	                sb.setLength(0);
-	                chunkCount = 0;
-	            }
-	        }
-
-	        // 남은 데이터 마저 쓰기
-	        if (sb.length() > 0) {
-	            writer.write(sb.toString());
-	        }
-
-	        writer.flush();
-
-	    } catch (IOException e) {
-	        e.printStackTrace();
-	        resultMap.put("result", "fail");
-	        try {
-	            return new ResponseEntity<>(mapper.writeValueAsString(resultMap), HttpStatus.INTERNAL_SERVER_ERROR);
-	        } catch (JsonProcessingException ex) {
-	            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-	        }
-	    } finally {
-	        // ★ 큰 리스트는 다 쓴 뒤 참조 해제 (GC 대상이 되도록)
-	        sampleListAll = null;
-	    }
-
-	    log.info("파일 저장 완료 :: filePath:{}, recordCount:{}", uploadPath, recordCount);
-
-	    resultMap.put("result", "success");
-	    resultMap.put("filePath", uploadPath);
-	    resultMap.put("recordCount", recordCount);
-
-	    try {
-	        return new ResponseEntity<>(mapper.writeValueAsString(resultMap), HttpStatus.OK);
-	    } catch (JsonProcessingException e) {
-	        e.printStackTrace();
-	        return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-	    }
+	public Map<String, Object> egovSampleListAjaxDownload(@ModelAttribute("searchVO") SampleDefaultVO searchVO)
+			throws IOException {
+		Map<String, Object> resultMap = new HashMap<>();
+		List<?> sampleListAll = null;
+		try {
+			sampleListAll = sampleService.selectSampleListAll(searchVO);
+			Map<String, Object> createChunkFile = createChunkFile(sampleListAll);
+			resultMap.put("data", String.valueOf( createChunkFile ));
+		} catch (Exception e) {
+			e.printStackTrace();
+			resultMap.put("result", "fail");
+		}
+		return resultMap;
 	}
-	
+
 	/**
 	 * AJAX 목록 조회 (JSON 응답)
 	 */
@@ -264,7 +262,7 @@ public class EgovSampleController<E> {
 		}
 
 	}
-	
+
 	/**
 	 * @category 리스트의 각 객체를 JSON으로 변환하여, 한 줄에 1건씩 파일로 저장 (JSON Lines 형식)
 	 *
@@ -272,48 +270,49 @@ public class EgovSampleController<E> {
 	 * @return 저장 결과 정보
 	 */
 	public Map<String, Object> createNewFileByLine(List<?> list) {
-	    Map<String, Object> resultMap = new HashMap<>();
-	    ObjectMapper mapper = new ObjectMapper();
+		Map<String, Object> resultMap = new HashMap<>();
+		ObjectMapper mapper = new ObjectMapper();
 
-	    Path targetPath = Paths.get(uploadPath, "sampleListAllWriteFile");
+		Path targetPath = Paths.get(uploadPath, "sampleListAllWriteFile");
 
-	    log.info("START::currentTimeMillis{}" , System.currentTimeMillis());
-	    try {
-	        Files.createDirectories(targetPath.getParent());
+		log.info("START::currentTimeMillis{}", System.currentTimeMillis());
+		try {
+			Files.createDirectories(targetPath.getParent());
 
-	        try (BufferedWriter writer = Files.newBufferedWriter(
-	                targetPath, StandardCharsets.UTF_8, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
+			try (BufferedWriter writer = Files.newBufferedWriter(targetPath, StandardCharsets.UTF_8,
+					StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
 
-	            for (Object item : list) {
-	                // ★ String이면 큰따옴표 없이 그대로, 아니면 JSON 직렬화
-	                String line = (item instanceof String) ? (String) item : mapper.writeValueAsString(item);
-	                writer.write(line);
-	                writer.newLine();
-	            }
-	        }
+				for (Object item : list) {
+					// ★ String이면 큰따옴표 없이 그대로, 아니면 JSON 직렬화
+					String line = (item instanceof String) ? (String) item : mapper.writeValueAsString(item);
+					writer.write(line);
+					writer.newLine();
+				}
+			}
 
-	        if (Files.exists(targetPath) && Files.size(targetPath) > 0) {
-	            log.info("파일 생성 성공 : {} ({} bytes, {} records)", targetPath, Files.size(targetPath), list.size());
-	            resultMap.put("result", "SUCCESS");
-	            resultMap.put("filePath", targetPath.toString());
-	            resultMap.put("fileSize", Files.size(targetPath));
-	            resultMap.put("recordCount", list.size());
-	        } else {
-	            log.warn("파일 생성 실패(파일 없음 또는 크기 0) : {}", targetPath);
-	            resultMap.put("result", "FAIL");
-	            resultMap.put("message", "파일이 생성되지 않았습니다.");
-	        }
+			if (Files.exists(targetPath) && Files.size(targetPath) > 0) {
+				log.info("파일 생성 성공 : {} ({} bytes, {} records)", targetPath, Files.size(targetPath), list.size());
+				resultMap.put("result", "SUCCESS");
+				resultMap.put("filePath", targetPath.toString());
+				resultMap.put("fileSize", Files.size(targetPath));
+				resultMap.put("recordCount", list.size());
+			} else {
+				log.warn("파일 생성 실패(파일 없음 또는 크기 0) : {}", targetPath);
+				resultMap.put("result", "FAIL");
+				resultMap.put("message", "파일이 생성되지 않았습니다.");
+			}
 
-	    } catch (IOException e) {
-	        log.error("파일 생성 중 오류 발생 : {}", targetPath, e);
-	        resultMap.put("result", "FAIL");
-	        resultMap.put("message", e.getMessage());
-	    }
-	    
-	    log.info("END::currentTimeMillis{}" , System.currentTimeMillis());
-	    
-	    return resultMap;
+		} catch (IOException e) {
+			log.error("파일 생성 중 오류 발생 : {}", targetPath, e);
+			resultMap.put("result", "FAIL");
+			resultMap.put("message", e.getMessage());
+		}
+
+		log.info("END::currentTimeMillis{}", System.currentTimeMillis());
+
+		return resultMap;
 	}
+
 	/**
 	 * @category create file
 	 * 
@@ -321,33 +320,33 @@ public class EgovSampleController<E> {
 	 * @return
 	 */
 	public Map<String, Object> cteateNewFile(String param) {
-	    Map<String, Object> resultMap = new HashMap<>();
+		Map<String, Object> resultMap = new HashMap<>();
 
-	    Path targetPath = Paths.get(uploadPath + "/sampleList_" + System.currentTimeMillis() + ".json");
+		Path targetPath = Paths.get(uploadPath + "/sampleList_" + System.currentTimeMillis() + ".json");
 
-	    try (InputStream in = new ByteArrayInputStream(param.getBytes(StandardCharsets.UTF_8))) {
-	        Files.createDirectories(targetPath.getParent()); // 디렉터리 없으면 생성
-	        Files.copy(in, targetPath, StandardCopyOption.REPLACE_EXISTING);
+		try (InputStream in = new ByteArrayInputStream(param.getBytes(StandardCharsets.UTF_8))) {
+			Files.createDirectories(targetPath.getParent()); // 디렉터리 없으면 생성
+			Files.copy(in, targetPath, StandardCopyOption.REPLACE_EXISTING);
 
-	        /** ===== 파일 생성 여부 확인 ===== */
-	        if (Files.exists(targetPath) && Files.size(targetPath) > 0) {
-	            log.info("파일 생성 성공 : {} ({} bytes)", targetPath, Files.size(targetPath));
-	            resultMap.put("result", "SUCCESS");
-	            resultMap.put("filePath", targetPath.toString());
-	            resultMap.put("fileSize", Files.size(targetPath));
-	        } else {
-	            log.warn("파일 생성 실패(파일 없음 또는 크기 0) : {}", targetPath);
-	            resultMap.put("result", "FAIL");
-	            resultMap.put("message", "파일이 생성되지 않았습니다.");
-	        }
+			/** ===== 파일 생성 여부 확인 ===== */
+			if (Files.exists(targetPath) && Files.size(targetPath) > 0) {
+				log.info("파일 생성 성공 : {} ({} bytes)", targetPath, Files.size(targetPath));
+				resultMap.put("result", "SUCCESS");
+				resultMap.put("filePath", targetPath.toString());
+				resultMap.put("fileSize", Files.size(targetPath));
+			} else {
+				log.warn("파일 생성 실패(파일 없음 또는 크기 0) : {}", targetPath);
+				resultMap.put("result", "FAIL");
+				resultMap.put("message", "파일이 생성되지 않았습니다.");
+			}
 
-	    } catch (IOException e) {
-	        log.error("파일 생성 중 오류 발생 : {}", targetPath, e);
-	        resultMap.put("result", "FAIL");
-	        resultMap.put("message", e.getMessage());
-	    }
+		} catch (IOException e) {
+			log.error("파일 생성 중 오류 발생 : {}", targetPath, e);
+			resultMap.put("result", "FAIL");
+			resultMap.put("message", e.getMessage());
+		}
 
-	    return resultMap;
+		return resultMap;
 	}
 
 	public void createFile(InputStream inputStream, String targetPath) throws IOException {
