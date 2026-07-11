@@ -28,12 +28,13 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
+import java.sql.Date;
+import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import org.apache.catalina.util.StringUtil;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.egovframe.rte.fdl.property.EgovPropertyService;
@@ -116,19 +117,23 @@ public class EgovSampleController<E> {
 	}
 
 	
+
 	public Map<String, Object> createChunkFile(List<?> param) throws IOException {
 	    Map<String, Object> resultMap = new HashMap<>();
 	    String createFilePath = "C:/Temp/upload/sample/chunkFile";
 	    File file = new File(createFilePath);
 	    File parentDir = file.getParentFile();
 	    if (parentDir != null && !parentDir.exists()) {
-	    	parentDir.delete();
 	        parentDir.mkdirs();
 	    }
 	    long recordCount = 0;
 	    int chunkCount = 0;
+	    SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
+
 	    log.info("START::createChunkFile--------------------------------------------------------------------------->>");
-	    log.info("currentTimeMillis{}",System.currentTimeMillis());
+	    long startTime = System.currentTimeMillis();
+	    log.info("startTime : {}", sdf.format(new Date(startTime)));
+
 	    // ★ 리스트 3개(writeobj, valueLineList) 만들지 않고 바로 파일에 씀
 	    try (BufferedWriter writer = new BufferedWriter(
 	            new OutputStreamWriter(new FileOutputStream(createFilePath), StandardCharsets.UTF_8),
@@ -179,8 +184,23 @@ public class EgovSampleController<E> {
 	        resultMap.put("recordCount", recordCount);
 	        resultMap.put("createFilePath", createFilePath);
 	    }
+
+	    long endTime = System.currentTimeMillis();
+	    long elapsedMillis = endTime - startTime;
+
+	    // 소요시간(기간)은 시:분:초 형식으로 별도 변환
+	    String elapsedFormatted = String.format("%02d:%02d:%02d",
+	            (elapsedMillis / 1000) / 3600,
+	            ((elapsedMillis / 1000) % 3600) / 60,
+	            (elapsedMillis / 1000) % 60);
+
+	    resultMap.put("startTime", sdf.format(new Date(startTime)));
+	    resultMap.put("endTime", sdf.format(new Date(endTime)));
+	    resultMap.put("elapsedTime", elapsedFormatted);
+
 	    log.info("파일 저장 완료 :: createFilePath:{}, recordCount:{}, chunkCount:{}", createFilePath, recordCount, chunkCount);
-	    log.info("currentTimeMillis{}",System.currentTimeMillis());
+	    log.info("endTime : {}, elapsedTime : {}", sdf.format(new Date(endTime)), elapsedFormatted);
+
 	    return resultMap;
 	}
 
@@ -192,8 +212,8 @@ public class EgovSampleController<E> {
 		List<?> sampleListAll = null;
 		try {
 			sampleListAll = sampleService.selectSampleListAll(searchVO);
-			Map<String, Object> createChunkFile = createChunkFile(sampleListAll);
-			resultMap.put("data", String.valueOf( createChunkFile ));
+			createChunkFile(sampleListAll);
+			
 		} catch (Exception e) {
 			e.printStackTrace();
 			resultMap.put("result", "fail");
