@@ -34,11 +34,21 @@
             	$("#checked_download").click(function(e){
             		console.log( e.target.checked )
             		if(e.target.checked){
-            			if(confirm('목록을 다운로드 하시겠습니까?')){
-            				
-            			}else{
-            				e.target.checked = false;
-            			}
+                        $.ajax({
+                            type: "GET",
+                            url: "<c:url value='/egovSampleListAjaxDownload.do'/>",
+                            data: null,
+                            dataType: "json",
+                            cache: false,
+                            success: function(data) {
+                                
+                            	console.log( data )
+                                
+                            },
+                            error: function(xhr, status, error) {
+                                alert("데이터를 불러오는 중 오류가 발생했습니다.");
+                            }
+                        });
             		}
             	})
             })
