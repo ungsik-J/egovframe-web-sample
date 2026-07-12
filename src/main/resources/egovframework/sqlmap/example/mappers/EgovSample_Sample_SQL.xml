@@ -27,14 +27,12 @@
 	</insert>
 
 	<update id="updateSample">
-
 			UPDATE SAMPLE
-			SET ID=#{id}
-				, NAME=#{name}
-				, DESCRIPTION=#{description}
-				, USE_YN=#{useYn}
-				  WHERE ID=#{id}
-
+			SET   NAME=NVL(#{name},NAME)
+				, DESCRIPTION=NVL(#{description},DESCRIPTION)
+				, USE_YN=NVL(#{useYn},USE_YN)
+				, FILE_NAME=NVL(#{fileName}, FILE_NAME)
+			WHERE ID=#{id}
 	</update>
 
 	<delete id="deleteSample">
@@ -54,6 +52,7 @@
 				    , REG_USER
 			FROM SAMPLE
 			WHERE ID=#{id}
+			AND USE_YN = 'Y'
 
 	</select>
 
@@ -62,7 +61,7 @@
             ID, NAME, DESCRIPTION, USE_YN, REG_USER
           FROM SAMPLE
          WHERE 1=1
-         AND ROWNUM BETWEEN 0 AND 999999
+         AND ROWNUM BETWEEN 0 AND 5000
     </select>
     <select id="selectSampleListAllNtile" parameterType="searchVO" resultType="egovMap">
         SELECT ID, NAME, DESCRIPTION, USE_YN, REG_USER
@@ -93,7 +92,8 @@
 		                </when>
 		            </choose>
 		        </if>
-		        AND ROWNUM BETWEEN 0 AND 999999
+		        AND USE_YN = 'Y'
+		        AND ROWNUM BETWEEN 0 AND 5000
 		        ORDER BY ID DESC
 		    ) A
 		    WHERE ROWNUM &lt;= #{firstIndex} + #{recordCountPerPage}
@@ -106,6 +106,7 @@
 			SELECT COUNT(*) totcnt
 			FROM SAMPLE
 			WHERE 1=1
+			AND USE_YN = 'Y'
 			<if test="searchKeyword != null and searchKeyword != ''">
 		        <choose>
 		            <when test="searchCondition == 0">

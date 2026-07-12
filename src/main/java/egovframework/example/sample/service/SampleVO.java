@@ -49,6 +49,17 @@ public class SampleVO extends SampleDefaultVO {
 
 	/** 등록자 */
 	private String regUser;
+	
+	/** 파일정보 */
+	private String fileName;
+
+	public String getFileName() {
+		return fileName;
+	}
+
+	public void setFileName(String fileName) {
+		this.fileName = fileName;
+	}
 
 	public String getId() {
 		return id;

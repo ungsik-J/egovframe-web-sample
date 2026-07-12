@@ -22,6 +22,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -35,13 +36,19 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 @Service
 public class FileUnit {
 	private static final Logger log = LoggerFactory.getLogger(FileUnit.class);
+	@Value("${Globals.FileUpload.Path}")
+	private String FileUpload;
+	@Value("${Globals.FileCreate.Path}")
+	private String FileCreate;
 	
 	/** public static void main(String[] args) { } **/
 	
 	public Map<String, Object> createChunkFile(List<?> param) throws IOException {
+		
+		log.info("uploadPath:{}", FileUpload);
 		Map<String, Object> resultMap = new HashMap<>();
-		String createFilePath = "C:/Temp/upload/sample/chunkFile";
-		File file = new File(createFilePath);
+		String filePath = FileCreate+"chunkFile"; // ${Globals.filePath}/file/create/
+		File file = new File(filePath);
 		File parentDir = file.getParentFile();
 		if (parentDir != null && !parentDir.exists()) {
 			parentDir.mkdirs();
@@ -54,7 +61,7 @@ public class FileUnit {
 		// ★ 리스트 3개(writeobj, valueLineList) 만들지 않고 바로 파일에 씀
 		StringBuilder sb = new StringBuilder(1000 * 2200);
 		try (BufferedWriter writer = new BufferedWriter(
-				new OutputStreamWriter(new FileOutputStream(createFilePath), StandardCharsets.UTF_8), 1024 * 1024)) {
+				new OutputStreamWriter(new FileOutputStream(filePath), StandardCharsets.UTF_8), 1024 * 1024)) {
 
 			for (Object item : param) {
 				if (!(item instanceof Map)) {
@@ -110,7 +117,7 @@ public class FileUnit {
 			resultMap.put("result", "success");
 			resultMap.put("chunkCount", chunkCount);
 			resultMap.put("recordCount", recordCount);
-			resultMap.put("createFilePath", createFilePath);
+			resultMap.put("createFilePath", filePath);
 		}
 
 		return resultMap;
@@ -205,11 +212,13 @@ public class FileUnit {
 		return resultMap;
 	}
 	
-	@RequestMapping(value = "/fileUploadAjax.do", method = RequestMethod.POST)
-	@ResponseBody
-	public Map<String, Object> fileUploadAjax(MultipartHttpServletRequest multipartRequest,String path) {
+	public Map<String, Object> fileUploadAjax(MultipartHttpServletRequest multipartRequest) {
 		log.info("\nSTART::fileUploadAjax {} ⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥");
 		ObjectMapper objectMapper = new ObjectMapper();
+		String filePath = FileUpload+"sampleList/"; // {Globals.filePath}/file/uplpad/
+		
+		log.info("filePath:{}", filePath);
+		
 		try {
 			log.info("multipartRequest : {}", objectMapper.writeValueAsString(multipartRequest.getParameterMap()));
 		} catch (JsonProcessingException e) {
@@ -222,6 +231,7 @@ public class FileUnit {
 			String id = multipartRequest.getParameter("id");
 			String name = multipartRequest.getParameter("name");
 			String description = multipartRequest.getParameter("description");
+			String useYn = multipartRequest.getParameter("useYn");
 
 			MultipartFile uploadFile = multipartRequest.getFile("uploadFile"); // input name과 일치
 
@@ -233,30 +243,32 @@ public class FileUnit {
 				String ext = FilenameUtils.getExtension(orgFileName);
 				saveFileName = UUID.randomUUID().toString() + "." + ext;
 
-				File dir = new File(path);
+				File dir = new File(filePath);
 				if (!dir.exists()) {
 					dir.mkdirs();
 				}
-				uploadFile.transferTo(new File(path + saveFileName));
+				uploadFile.transferTo(new File(filePath + saveFileName));
 			}
 
 			Map<String, Object> paramMap = new HashMap<String, Object>();
 			paramMap.put("id", id);
 			paramMap.put("name", name);
 			paramMap.put("description", description);
+			paramMap.put("useYn", useYn);
 			paramMap.put("orgFileName", orgFileName);
 			paramMap.put("fileName", saveFileName);
-			paramMap.put("filePath", path);
+			paramMap.put("filePath", filePath);
 
-			// sampleService.updateSample(paramMap);
-
-			resultMap.put("resultCode", "success");
+			resultMap.put("result", "sucess");
+			resultMap.put("resultCode", "0000");
 			resultMap.put("resultMsg", "정상적으로 처리되었습니다.");
+			resultMap.put("paramMap", paramMap);
 
 		} catch (Exception e) {
-			e.printStackTrace();
-			resultMap.put("resultCode", "fail");
+			resultMap.put("result", "fail");
+			resultMap.put("resultCode", "-1");
 			resultMap.put("resultMsg", e.getMessage());
+			e.printStackTrace();
 		}
 		log.info("\nEND::fileUploadAjax {}⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤");
 		return resultMap;

@@ -41,7 +41,10 @@ import org.egovframe.rte.ptl.mvc.tags.ui.pagination.PaginationInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.stereotype.Service;
@@ -104,8 +107,10 @@ public class EgovSampleController<E> {
 	@Autowired
 	private final MapKeyConverter mapKeyConverter;
 
-	// 실제 서버 저장 경로 (properties로 분리 권장)
-	private final String filePath = "c:/temp/upload/sample/";
+	@Value("${Globals.FileUpload.Path}")
+	private String FileUpload;
+	@Value("${Globals.FileCreate.Path}")
+	private String FileCreate;
 	
 	@Autowired
 	private FileUnit fileUnit;
@@ -119,7 +124,71 @@ public class EgovSampleController<E> {
 		// 들어온 URL 값(pageName)을 그대로 HTML 파일명으로 지정하여 동적 이동
 		return "sample/" + pageName;
 	}
+	@SuppressWarnings("unchecked")
+	@RequestMapping(value = "/fileUploadAjax.do", method = RequestMethod.POST)
+	@ResponseBody
+	public ResponseEntity<?>  fileUploadAjax(MultipartHttpServletRequest multipartRequest) {
+		HttpHeaders headers = new HttpHeaders();
+		headers.setContentType(new MediaType("application", "json", StandardCharsets.UTF_8));
+		log.info("\nSTART::fileUploadAjax {} ⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥");
+		ObjectMapper objectMapper = new ObjectMapper();
+		
+		try {
+			log.info("multipartRequest : {}", objectMapper.writeValueAsString(multipartRequest.getParameterMap()));
+		} catch (JsonProcessingException e) {
+			e.printStackTrace();
+		}
 
+		Map<String, Object> resultMap = new HashMap<String, Object>();
+
+		try {
+
+			resultMap = fileUnit.fileUploadAjax(multipartRequest);
+			
+			log.info("fileUploadAjax.resultMap:{}", objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(resultMap) );
+			
+			if("sucess".equals(resultMap.get("result"))) {
+				Object paramMapObj = resultMap.get("paramMap");
+				Map<String, Object> paramMap = (Map<String, Object>) paramMapObj;
+				
+				log.info("1{}" , paramMap.get("fileName"));
+				log.info("1{}" , paramMap.get("filePath"));
+				log.info("1{}" , paramMap.get("id"));
+				
+				SampleVO samplevo = new SampleVO();
+				
+				String fileName = paramMap.get("filePath")+""+paramMap.get("fileName");
+				samplevo.setId(String.valueOf( paramMap.get("id")));
+				samplevo.setName(String.valueOf( paramMap.get("name")));
+				samplevo.setDescription(String.valueOf( paramMap.get("description")));
+				samplevo.setUseYn(String.valueOf( paramMap.get("useYn")));
+				samplevo.setFileName(fileName);
+				
+				int updateCnt = sampleService.updateSample(samplevo);
+				
+				if(updateCnt > 0) {
+					resultMap.put("result", resultMap.get("result"));
+				}else {
+					resultMap.put("result", "updatefail");
+				}
+			}
+			
+			
+			return new ResponseEntity<>(objectMapper.writeValueAsString(resultMap), headers, HttpStatus.OK);
+		} catch (Exception e) {
+			e.printStackTrace();
+			resultMap.put("resultCode", "fail");
+			resultMap.put("resultMsg", e.getMessage());
+			try {
+				return new ResponseEntity<>(objectMapper.writeValueAsString(resultMap), headers, HttpStatus.valueOf(-1));
+			} catch (JsonProcessingException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+		}
+		log.info("\nEND::fileUploadAjax {}⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤");
+		return null;
+	}
 	@RequestMapping(value = "/egovSampleListAjaxDownload.do")
 	@ResponseBody
 	public ResponseEntity<?> egovSampleListAjaxDownload(@ModelAttribute("searchVO") SampleDefaultVO searchVO)
@@ -127,29 +196,23 @@ public class EgovSampleController<E> {
 		
 		ObjectMapper mapper = new ObjectMapper();
 		Map<String, Object> resultMap = new HashMap<>();
+		ResponseEntity<?> responseentity = new ResponseEntity<>(HttpStatus.NO_CONTENT);
 
 		try {
 			SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
 			long startTime = System.currentTimeMillis();
 			log.info("egovSampleListAjaxDownload.startTime : {}", sdf.format(new Date(startTime)));
 			
-			Map<String, Object> result = fileUnit.createChunkFile(sampleService.selectSampleListAll(searchVO));
+			resultMap = fileUnit.createChunkFile(sampleService.selectSampleListAll(searchVO));
 			
-			log.info("result:{}", result.get("result") );
-			
-			long endTime = System.currentTimeMillis();
-			long elapsedMillis = endTime - startTime;
-			// 소요시간(기간)은 시:분:초 형식으로 별도 변환
-			String elapsedFormatted = String.format("%02d:%02d:%02d", (elapsedMillis / 1000) / 3600,
-					((elapsedMillis / 1000) % 3600) / 60, (elapsedMillis / 1000) % 60);
-			log.info("egovSampleListAjaxDownload.endTime : {}, egovSampleListAjaxDownload.elapsedTime : {}", sdf.format(new Date(endTime)), elapsedFormatted);
-			
+			responseentity = new ResponseEntity<>(mapper.writeValueAsString(resultMap), HttpStatus.OK);
 			
 		} catch (Exception e) {
 			e.printStackTrace();
 			resultMap.put("result", "fail");
+			responseentity = new ResponseEntity<>(mapper.writeValueAsString(resultMap), HttpStatus.EXPECTATION_FAILED);
 		}
-		return new ResponseEntity<>(mapper.writeValueAsString(resultMap), HttpStatus.OK);
+		return responseentity;
 	}
 
 	/**
