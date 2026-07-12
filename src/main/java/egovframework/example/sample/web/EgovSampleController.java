@@ -105,7 +105,7 @@ public class EgovSampleController<E> {
 	private final MapKeyConverter mapKeyConverter;
 
 	// 실제 서버 저장 경로 (properties로 분리 권장)
-	private final String uploadPath = "c:/temp/upload/sample/";
+	private final String filePath = "c:/temp/upload/sample/";
 	
 	@Autowired
 	private FileUnit fileUnit;

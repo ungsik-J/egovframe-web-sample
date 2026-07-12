@@ -35,10 +35,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 @Service
 public class FileUnit {
 	private static final Logger log = LoggerFactory.getLogger(FileUnit.class);
-	public static void main(String[] args) {
-		// TODO Auto-generated method stub
-
-	}
+	
+	/** public static void main(String[] args) { } **/
+	
 	public Map<String, Object> createChunkFile(List<?> param) throws IOException {
 		Map<String, Object> resultMap = new HashMap<>();
 		String createFilePath = "C:/Temp/upload/sample/chunkFile";
