@@ -473,6 +473,7 @@ table.data-table{
                     <th class="col-no">No</th>
                     <th class="col-id">ID</th>
                     <th>이름</th>
+                    <th>파일</th>
                 </tr>
             </thead>
             <tbody id="listBody">
@@ -642,11 +643,14 @@ function fn_select_list() {
                 } else {
                     $.each(list, function (index, item) {
                         var rowNum = pagination.totalRecordCount + 1 - ((searchVO.pageIndex - 1) * searchVO.pageSize + (index + 1));
-
+					
+                        let file = (item.fileName) ? item.fileName.split("/").pop() : ""; //(item.fileName) ? "Y" : "N";
+						//file += item.fileName.split("/").pop();
                         html += "<tr>";
                         html += "  <td class='col-no mono'>" + rowNum + "</td>";
                         html += "  <td class='col-id mono'>" + item.id + "</td>";
                         html += "  <td><a href='javascript:void(0);' class='row-link' onclick='fn_detail(" + JSON.stringify(item) + ")'>" + item.name + "</a></td>";
+                        html += "  <td class='col-id mono'>" + file + "</td>";
                         html += "</tr>";
                     });
                 }

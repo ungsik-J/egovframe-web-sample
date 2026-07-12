@@ -48,6 +48,7 @@
 				    ID
 				    , NAME
 				    , DESCRIPTION
+				    , FILE_NAME
 				    , USE_YN
 				    , REG_USER
 			FROM SAMPLE
@@ -79,7 +80,7 @@
 		        ROWNUM AS RNUM, A.*
 		    FROM (
 		        SELECT /*+ INDEX(SAMPLE PK_SAMPLE) */
-		            ID, NAME, DESCRIPTION, USE_YN, REG_USER
+		            ID, NAME, DESCRIPTION, FILE_NAME, USE_YN, REG_USER
 		        FROM SAMPLE
 		        WHERE 1=1
 		        <if test="searchKeyword != null and searchKeyword != ''">
