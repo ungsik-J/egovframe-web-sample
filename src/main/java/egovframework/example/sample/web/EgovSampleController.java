@@ -44,6 +44,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+import org.springframework.stereotype.Service;
 import org.springframework.ui.Model;
 import org.springframework.ui.ModelMap;
 import org.springframework.validation.BindingResult;
@@ -64,6 +65,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import egovframework.com.cmm.util.MapKeyConverter;
+import egovframework.example.cmmn.FileUnit;
 import egovframework.example.sample.service.EgovSampleService;
 import egovframework.example.sample.service.SampleDefaultVO;
 import egovframework.example.sample.service.SampleVO;
@@ -104,6 +106,9 @@ public class EgovSampleController<E> {
 
 	// 실제 서버 저장 경로 (properties로 분리 권장)
 	private final String uploadPath = "c:/temp/upload/sample/";
+	
+	@Autowired
+	private FileUnit fileUnit;
 
 	@GetMapping("/sample/{pageName}.do")
 	public String dynamicPageMapping(@PathVariable("pageName") String pageName) {
@@ -113,103 +118,6 @@ public class EgovSampleController<E> {
 
 		// 들어온 URL 값(pageName)을 그대로 HTML 파일명으로 지정하여 동적 이동
 		return "sample/" + pageName;
-	}
-
-	public Map<String, Object> createChunkFile(List<?> param) throws IOException {
-		Map<String, Object> resultMap = new HashMap<>();
-		String createFilePath = "C:/Temp/upload/sample/chunkFile";
-		File file = new File(createFilePath);
-		File parentDir = file.getParentFile();
-		if (parentDir != null && !parentDir.exists()) {
-			parentDir.mkdirs();
-		}
-		long recordCount = 0;
-		int chunkCount = 0;
-		boolean isFirstLine = true; // ★ 전체 데이터 기준 첫 줄 여부 (청크와 무관하게 한 번만 true)
-		SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
-
-		log.info("START::createChunkFile--------------------------------------------------------------------------->>");
-		long startTime = System.currentTimeMillis();
-		log.info("createChunkFile.startTime : {}", sdf.format(new Date(startTime)));
-
-		// ★ 리스트 3개(writeobj, valueLineList) 만들지 않고 바로 파일에 씀
-		StringBuilder sb = new StringBuilder(1000 * 2200);
-		try (BufferedWriter writer = new BufferedWriter(
-				new OutputStreamWriter(new FileOutputStream(createFilePath), StandardCharsets.UTF_8), 1024 * 1024)) {
-
-			for (Object item : param) {
-				if (!(item instanceof Map)) {
-					continue;
-				}
-				Map<?, ?> map = (Map<?, ?>) item;
-				String id = "";
-				String name = "";
-				String description = "";
-				for (Map.Entry<?, ?> entry : map.entrySet()) {
-					Object key = entry.getKey();
-					Object value = entry.getValue();
-					if ("id".equals(key)) {
-						id = "[" + StringUtils.rightPad((String) value, 256, "") + "]";
-					} else if ("name".equals(key)) {
-						name = "[" + StringUtils.rightPad((String) value, 512, "") + "]";
-					} else if ("description".equals(key)) {
-						description = "[" + StringUtils.rightPad((String) value, 1024, "") + "]";
-					}
-				}
-
-				// ★ 첫 줄이 아니면 "이전 줄과 구분하는 개행"을 먼저 붙임 (줄 뒤가 아니라 줄 앞에 붙이는 방식)
-				if (!isFirstLine) {
-					sb.append(System.lineSeparator());
-				}
-				sb.append(id).append(name).append(description);
-				isFirstLine = false;
-
-				recordCount++;
-				chunkCount++;
-				// 1000건마다 파일에 flush 하고 StringBuilder 비움 (메모리 누적 방지)
-				if (chunkCount >= 1000) {
-					writer.write(String.valueOf(sb));
-					writer.flush();
-					sb.setLength(0);
-					chunkCount = 0;
-				}
-			}
-			log.info("length:{}", sb.length());
-			// 남은 데이터 마저 쓰기
-			if (sb.length() > 0) {
-				writer.write(String.valueOf(sb));
-			}
-
-		} catch (IOException e) {
-			e.printStackTrace();
-			resultMap.put("result", "fail");
-			return resultMap;
-		} finally {
-			// ★ 큰 리스트는 다 쓴 뒤 참조 해제 (GC 대상이 되도록)
-			param = null;
-			sb = null;
-			resultMap.put("result", "success");
-			resultMap.put("chunkCount", chunkCount);
-			resultMap.put("recordCount", recordCount);
-			resultMap.put("createFilePath", createFilePath);
-		}
-
-		long endTime = System.currentTimeMillis();
-		long elapsedMillis = endTime - startTime;
-
-		// 소요시간(기간)은 시:분:초 형식으로 별도 변환
-		String elapsedFormatted = String.format("%02d:%02d:%02d", (elapsedMillis / 1000) / 3600,
-				((elapsedMillis / 1000) % 3600) / 60, (elapsedMillis / 1000) % 60);
-
-		resultMap.put("startTime", sdf.format(new Date(startTime)));
-		resultMap.put("endTime", sdf.format(new Date(endTime)));
-		resultMap.put("elapsedTime", elapsedFormatted);
-
-		log.info("파일 저장 완료 :: createFilePath:{}, recordCount:{}, chunkCount:{}", createFilePath, recordCount,
-				chunkCount);
-		log.info("createChunkFile.endTime : {}, createChunkFile.elapsedTime : {}", sdf.format(new Date(endTime)), elapsedFormatted);
-
-		return resultMap;
 	}
 
 	@RequestMapping(value = "/egovSampleListAjaxDownload.do")
@@ -225,8 +133,7 @@ public class EgovSampleController<E> {
 			long startTime = System.currentTimeMillis();
 			log.info("egovSampleListAjaxDownload.startTime : {}", sdf.format(new Date(startTime)));
 			
-			
-			Map<String, Object> result = createChunkFile(sampleService.selectSampleListAll(searchVO));
+			Map<String, Object> result = fileUnit.createChunkFile(sampleService.selectSampleListAll(searchVO));
 			
 			log.info("result:{}", result.get("result") );
 			
@@ -298,155 +205,6 @@ public class EgovSampleController<E> {
 		}
 
 	}
-
-	/**
-	 * @category 리스트의 각 객체를 JSON으로 변환하여, 한 줄에 1건씩 파일로 저장 (JSON Lines 형식)
-	 *
-	 * @param list 저장할 객체 리스트
-	 * @return 저장 결과 정보
-	 */
-	public Map<String, Object> createNewFileByLine(List<?> list) {
-		Map<String, Object> resultMap = new HashMap<>();
-		ObjectMapper mapper = new ObjectMapper();
-
-		Path targetPath = Paths.get(uploadPath, "sampleListAllWriteFile");
-
-		log.info("START::currentTimeMillis{}", System.currentTimeMillis());
-		try {
-			Files.createDirectories(targetPath.getParent());
-
-			try (BufferedWriter writer = Files.newBufferedWriter(targetPath, StandardCharsets.UTF_8,
-					StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
-
-				for (Object item : list) {
-					// ★ String이면 큰따옴표 없이 그대로, 아니면 JSON 직렬화
-					String line = (item instanceof String) ? (String) item : mapper.writeValueAsString(item);
-					writer.write(line);
-					writer.newLine();
-				}
-			}
-
-			if (Files.exists(targetPath) && Files.size(targetPath) > 0) {
-				log.info("파일 생성 성공 : {} ({} bytes, {} records)", targetPath, Files.size(targetPath), list.size());
-				resultMap.put("result", "SUCCESS");
-				resultMap.put("filePath", targetPath.toString());
-				resultMap.put("fileSize", Files.size(targetPath));
-				resultMap.put("recordCount", list.size());
-			} else {
-				log.warn("파일 생성 실패(파일 없음 또는 크기 0) : {}", targetPath);
-				resultMap.put("result", "FAIL");
-				resultMap.put("message", "파일이 생성되지 않았습니다.");
-			}
-
-		} catch (IOException e) {
-			log.error("파일 생성 중 오류 발생 : {}", targetPath, e);
-			resultMap.put("result", "FAIL");
-			resultMap.put("message", e.getMessage());
-		}
-
-		log.info("END::currentTimeMillis{}", System.currentTimeMillis());
-
-		return resultMap;
-	}
-
-	/**
-	 * @category create file
-	 * 
-	 * @param param
-	 * @return
-	 */
-	public Map<String, Object> cteateNewFile(String param) {
-		Map<String, Object> resultMap = new HashMap<>();
-
-		Path targetPath = Paths.get(uploadPath + "/sampleList_" + System.currentTimeMillis() + ".json");
-
-		try (InputStream in = new ByteArrayInputStream(param.getBytes(StandardCharsets.UTF_8))) {
-			Files.createDirectories(targetPath.getParent()); // 디렉터리 없으면 생성
-			Files.copy(in, targetPath, StandardCopyOption.REPLACE_EXISTING);
-
-			/** ===== 파일 생성 여부 확인 ===== */
-			if (Files.exists(targetPath) && Files.size(targetPath) > 0) {
-				log.info("파일 생성 성공 : {} ({} bytes)", targetPath, Files.size(targetPath));
-				resultMap.put("result", "SUCCESS");
-				resultMap.put("filePath", targetPath.toString());
-				resultMap.put("fileSize", Files.size(targetPath));
-			} else {
-				log.warn("파일 생성 실패(파일 없음 또는 크기 0) : {}", targetPath);
-				resultMap.put("result", "FAIL");
-				resultMap.put("message", "파일이 생성되지 않았습니다.");
-			}
-
-		} catch (IOException e) {
-			log.error("파일 생성 중 오류 발생 : {}", targetPath, e);
-			resultMap.put("result", "FAIL");
-			resultMap.put("message", e.getMessage());
-		}
-
-		return resultMap;
-	}
-
-	public void createFile(InputStream inputStream, String targetPath) throws IOException {
-		Path _targetPath = Paths.get(targetPath);
-		Files.copy(inputStream, _targetPath, StandardCopyOption.REPLACE_EXISTING);
-	}
-
-	@RequestMapping(value = "/fileUploadAjax.do", method = RequestMethod.POST)
-	@ResponseBody
-	public Map<String, Object> fileUploadAjax(MultipartHttpServletRequest multipartRequest) {
-		log.info("\nSTART::fileUploadAjax {} ⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥");
-		ObjectMapper objectMapper = new ObjectMapper();
-		try {
-			log.info("multipartRequest : {}", objectMapper.writeValueAsString(multipartRequest.getParameterMap()));
-		} catch (JsonProcessingException e) {
-			e.printStackTrace();
-		}
-
-		Map<String, Object> resultMap = new HashMap<String, Object>();
-
-		try {
-			String id = multipartRequest.getParameter("id");
-			String name = multipartRequest.getParameter("name");
-			String description = multipartRequest.getParameter("description");
-
-			MultipartFile uploadFile = multipartRequest.getFile("uploadFile"); // input name과 일치
-
-			String orgFileName = "";
-			String saveFileName = "";
-
-			if (uploadFile != null && !uploadFile.isEmpty()) {
-				orgFileName = uploadFile.getOriginalFilename();
-				String ext = FilenameUtils.getExtension(orgFileName);
-				saveFileName = UUID.randomUUID().toString() + "." + ext;
-
-				File dir = new File(uploadPath);
-				if (!dir.exists()) {
-					dir.mkdirs();
-				}
-				uploadFile.transferTo(new File(uploadPath + saveFileName));
-			}
-
-			Map<String, Object> paramMap = new HashMap<String, Object>();
-			paramMap.put("id", id);
-			paramMap.put("name", name);
-			paramMap.put("description", description);
-			paramMap.put("orgFileName", orgFileName);
-			paramMap.put("fileName", saveFileName);
-			paramMap.put("filePath", uploadPath);
-
-			// sampleService.updateSample(paramMap);
-
-			resultMap.put("resultCode", "success");
-			resultMap.put("resultMsg", "정상적으로 처리되었습니다.");
-
-		} catch (Exception e) {
-			e.printStackTrace();
-			resultMap.put("resultCode", "fail");
-			resultMap.put("resultMsg", e.getMessage());
-		}
-		log.info("\nEND::fileUploadAjax {}⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤");
-		return resultMap;
-	}
-
 	/**
 	 * 글 목록을 조회한다. (pageing)
 	 * 
