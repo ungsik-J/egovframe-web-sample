@@ -25,11 +25,17 @@ public class HelloWorld {
 	private static final Logger log = LoggerFactory.getLogger(HelloWorld.class);
 	private final static String uploadPath = "c:/temp/upload/sample/";
 	public static void main(String[] args) throws IOException {
-		runCreateSampleData();
+		
+		int rownum = 9999999;
+		
+		
+		
+		
+		//runCreateSampleData();
 	}
 	
 	public static void runCreateSampleData() throws FileNotFoundException, IOException {
-		String filePath = "C:/Temp/upload/sample/sampleData_999999.csv";
+		String filePath = "C:/Temp/upload/sample/sampleData_9999999.csv";
 		SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
 		long startTime = System.currentTimeMillis();
 		log.info("startTime : {}", sdf.format(new Date(startTime)));
@@ -41,7 +47,7 @@ public class HelloWorld {
 	        int chunkCount = 0;
 	        sb.append("ID,NAME,DESCRIPTION,USE_YN,REG_USER");
 	        sb.append(System.lineSeparator());
-	        for (int i = 0; i < 999999; i++) {
+	        for (int i = 0; i < 9999999; i++) {
 	            sb.append("SAMPLE-").append(i)
 	              .append(",Runtime Environment_").append(i)
 	              .append(",Presentation Layer").append(i)

@@ -130,7 +130,7 @@ public class EgovSampleController<E> {
 
 		log.info("START::createChunkFile--------------------------------------------------------------------------->>");
 		long startTime = System.currentTimeMillis();
-		log.info("startTime : {}", sdf.format(new Date(startTime)));
+		log.info("createChunkFile.startTime : {}", sdf.format(new Date(startTime)));
 
 		// ★ 리스트 3개(writeobj, valueLineList) 만들지 않고 바로 파일에 씀
 		StringBuilder sb = new StringBuilder(1000 * 2200);
@@ -169,6 +169,7 @@ public class EgovSampleController<E> {
 				// 1000건마다 파일에 flush 하고 StringBuilder 비움 (메모리 누적 방지)
 				if (chunkCount >= 1000) {
 					writer.write(String.valueOf(sb));
+					writer.flush();
 					sb.setLength(0);
 					chunkCount = 0;
 				}
@@ -206,7 +207,7 @@ public class EgovSampleController<E> {
 
 		log.info("파일 저장 완료 :: createFilePath:{}, recordCount:{}, chunkCount:{}", createFilePath, recordCount,
 				chunkCount);
-		log.info("endTime : {}, elapsedTime : {}", sdf.format(new Date(endTime)), elapsedFormatted);
+		log.info("createChunkFile.endTime : {}, createChunkFile.elapsedTime : {}", sdf.format(new Date(endTime)), elapsedFormatted);
 
 		return resultMap;
 	}
@@ -220,9 +221,23 @@ public class EgovSampleController<E> {
 		Map<String, Object> resultMap = new HashMap<>();
 
 		try {
+			SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
+			long startTime = System.currentTimeMillis();
+			log.info("egovSampleListAjaxDownload.startTime : {}", sdf.format(new Date(startTime)));
 			
-			resultMap.put("result", String.valueOf( createChunkFile(sampleService.selectSampleListAll(searchVO)) ));
-
+			
+			Map<String, Object> result = createChunkFile(sampleService.selectSampleListAll(searchVO));
+			
+			log.info("result:{}", result.get("result") );
+			
+			long endTime = System.currentTimeMillis();
+			long elapsedMillis = endTime - startTime;
+			// 소요시간(기간)은 시:분:초 형식으로 별도 변환
+			String elapsedFormatted = String.format("%02d:%02d:%02d", (elapsedMillis / 1000) / 3600,
+					((elapsedMillis / 1000) % 3600) / 60, (elapsedMillis / 1000) % 60);
+			log.info("egovSampleListAjaxDownload.endTime : {}, egovSampleListAjaxDownload.elapsedTime : {}", sdf.format(new Date(endTime)), elapsedFormatted);
+			
+			
 		} catch (Exception e) {
 			e.printStackTrace();
 			resultMap.put("result", "fail");

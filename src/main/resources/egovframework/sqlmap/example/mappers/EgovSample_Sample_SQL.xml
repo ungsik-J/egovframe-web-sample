@@ -58,9 +58,20 @@
 	</select>
 
     <select id="selectSampleListAll" parameterType="searchVO" resultType="egovMap">
-        SELECT ID, NAME, DESCRIPTION, USE_YN, REG_USER
+        SELECT /*+ INDEX(SAMPLE PK_SAMPLE) */
+            ID, NAME, DESCRIPTION, USE_YN, REG_USER
           FROM SAMPLE
          WHERE 1=1
+         AND ROWNUM BETWEEN 0 AND 999999
+    </select>
+    <select id="selectSampleListAllNtile" parameterType="searchVO" resultType="egovMap">
+        SELECT ID, NAME, DESCRIPTION, USE_YN, REG_USER
+		FROM (
+		    SELECT /*+ INDEX(SAMPLE PK_SAMPLE) */ ID, NAME, DESCRIPTION, USE_YN, REG_USER,
+		           NTILE(5) OVER (ORDER BY ID) AS GRP
+		    FROM SAMPLE
+		)
+		WHERE GRP = #{pageIndex}
     </select>
     
 	<select id="selectSampleList" parameterType="searchVO" resultType="egovMap">
@@ -68,7 +79,7 @@
 		    SELECT 
 		        ROWNUM AS RNUM, A.*
 		    FROM (
-		        SELECT
+		        SELECT /*+ INDEX(SAMPLE PK_SAMPLE) */
 		            ID, NAME, DESCRIPTION, USE_YN, REG_USER
 		        FROM SAMPLE
 		        WHERE 1=1
@@ -82,6 +93,7 @@
 		                </when>
 		            </choose>
 		        </if>
+		        AND ROWNUM BETWEEN 0 AND 999999
 		        ORDER BY ID DESC
 		    ) A
 		    WHERE ROWNUM &lt;= #{firstIndex} + #{recordCountPerPage}
