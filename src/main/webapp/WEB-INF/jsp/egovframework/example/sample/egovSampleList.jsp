@@ -485,7 +485,7 @@ table.data-table{
             </tbody>
         </table>
     </div>
-
+	<img id="previewImg" src="">>
     <div id="pagingArea" class="pagination-wrap"></div>
 </div>
 
@@ -497,7 +497,7 @@ table.data-table{
             <h3>상세 정보 및 수정</h3>
             <button type="button" class="drawer-close" onclick="fn_close_modal();">&times;</button>
         </div>
-
+	
         <form id="detailForm" name="detailForm" enctype="multipart/form-data" style="display:contents;">
             <div class="drawer-body">
                 <div class="field">
@@ -589,6 +589,8 @@ $(document).ready(function () {
             });
         }
     });
+    
+
 });
 
 /* ===================== Toast ===================== */
@@ -620,7 +622,36 @@ function showConfirmDialog(message) {
         $("#confirmCancelBtn").on("click", function () { cleanup(false); });
     });
 }
+function fn_fileOver(el, fileName) {
+    console.log('마우스 오버:', fileName);
+    if(fileName){
+    	el.style.backgroundColor = '#f0f8ff';
+    	
+    	$.ajax({
+    	    type: "GET",  // ✅ GET 또는 POST로 수정
+    	    url: "<c:url value='/egovSampleImageView.do'/>",
+    	    data: { fileName: fileName },
+    	    dataType: "json",
+    	    cache: false,
+    	    success: function (data) {
+    	        console.log(data);
+    	        // 예: base64 이미지를 화면에 표시
+    	        if (data.imageBase64) {
+    	            $('#previewImg').attr('src', 'data:image/' + data.fileType + ';base64,' + data.imageBase64);
+    	        }
+    	    },
+    	    error: function (xhr, status, error) {
+    	        showToast("데이터를 불러오는 중 오류가 발생했습니다.", "error");
+    	    }
+    	});
+    }
+    
+}
 
+function fn_fileOut(el) {
+    el.style.backgroundColor = '';
+    
+}
 /* ===================== AJAX 목록 조회 ===================== */
 function fn_select_list() {
     var formData = $("#searchForm").serialize();
@@ -650,7 +681,7 @@ function fn_select_list() {
                         html += "  <td class='col-no mono'>" + rowNum + "</td>";
                         html += "  <td class='col-id mono'>" + item.id + "</td>";
                         html += "  <td><a href='javascript:void(0);' class='row-link' onclick='fn_detail(" + JSON.stringify(item) + ")'>" + item.name + "</a></td>";
-                        html += "  <td class='col-id mono'>" + file + "</td>";
+                        html += "  <td class='col-id mono' name='fileName' onmouseover='fn_fileOver(this, \"" + item.fileName + "\")' onmouseout='fn_fileOut(this)'>" + file + "</td>";
                         html += "</tr>";
                     });
                 }
