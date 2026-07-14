@@ -134,10 +134,7 @@ public class EgovSampleServiceImpl extends EgovAbstractServiceImpl implements Eg
 	public List<?> selectSampleListAll(SampleDefaultVO searchVO) throws Exception {
 		return sampleDAO.selectSampleListAll(searchVO);
 	}
-	@Override
-	public List<?> selectSampleListAllNtile(SampleDefaultVO searchVO) throws Exception {
-		return sampleDAO.selectSampleListAllNtile(searchVO);
-	}
+	
 	/**
 	 * 글 총 갯수를 조회한다.
 	 * @param searchVO - 조회할 정보가 담긴 VO

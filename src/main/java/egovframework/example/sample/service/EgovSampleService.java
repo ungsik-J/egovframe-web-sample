@@ -76,7 +76,7 @@ public interface EgovSampleService {
 	 */
 	List<?> selectSampleList(SampleDefaultVO searchVO) throws Exception;
 	List<?> selectSampleListAll(SampleDefaultVO searchVO) throws Exception;
-	List<?> selectSampleListAllNtile(SampleDefaultVO searchVO) throws Exception;
+	
 	/**
 	 * 글 총 갯수를 조회한다.
 	 * @param searchVO - 조회할 정보가 담긴 VO

@@ -64,15 +64,6 @@
          WHERE 1=1
          AND ROWNUM BETWEEN 0 AND 5000
     </select>
-    <select id="selectSampleListAllNtile" parameterType="searchVO" resultType="egovMap">
-        SELECT ID, NAME, DESCRIPTION, USE_YN, REG_USER
-		FROM (
-		    SELECT /*+ INDEX(SAMPLE PK_SAMPLE) */ ID, NAME, DESCRIPTION, USE_YN, REG_USER,
-		           NTILE(5) OVER (ORDER BY ID) AS GRP
-		    FROM SAMPLE
-		)
-		WHERE GRP = #{pageIndex}
-    </select>
     
 	<select id="selectSampleList" parameterType="searchVO" resultType="egovMap">
 		SELECT * FROM (
