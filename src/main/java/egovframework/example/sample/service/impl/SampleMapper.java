@@ -81,7 +81,7 @@ public interface SampleMapper {
 	 */
 	List<?> selectSampleList(SampleDefaultVO searchVO) throws Exception;
 	List<?> selectSampleListAll(SampleDefaultVO searchVO) throws Exception;
-	
+	List<Map<String, Object>> selectSampleListHashMap(SampleDefaultVO searchVO) throws Exception;
 
 	/**
 	 * 글 총 갯수를 조회한다.

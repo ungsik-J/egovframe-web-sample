@@ -134,6 +134,10 @@ public class EgovSampleServiceImpl extends EgovAbstractServiceImpl implements Eg
 	public List<?> selectSampleListAll(SampleDefaultVO searchVO) throws Exception {
 		return sampleDAO.selectSampleListAll(searchVO);
 	}
+	@Override
+	public List<Map<String, Object>> selectSampleListHashMap(SampleDefaultVO searchVO) throws Exception {
+		return sampleDAO.selectSampleListHashMap(searchVO);
+	}
 	
 	/**
 	 * 글 총 갯수를 조회한다.
