@@ -65,6 +65,19 @@
          AND ROWNUM BETWEEN 0 AND 5000
     </select>
     
+    <select id="selectSampleListHashMap" parameterType="searchVO" resultType="java.util.HashMap">
+        SELECT /*+ INDEX(SAMPLE PK_SAMPLE) */
+              RPAD('_HEADER_',20,' ') AS HEADER
+            , RPAD(ID, 20, ' ') AS ID 
+            , RPAD(NAME, 45, ' ') AS NAME
+            , RPAD(DESCRIPTION, 50, ' ') AS DESCRIPTION
+            , RPAD(USE_YN, 5, ' ') AS USE_YN
+            , RPAD(REG_USER, 50, '' ) AS REG_USER
+          FROM SAMPLE
+         WHERE 1=1
+         AND ROWNUM BETWEEN 0 AND 10
+    </select>
+    
 	<select id="selectSampleList" parameterType="searchVO" resultType="egovMap">
 		SELECT * FROM (
 		    SELECT 

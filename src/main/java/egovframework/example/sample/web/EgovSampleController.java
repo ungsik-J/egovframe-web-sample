@@ -15,6 +15,7 @@
  */
 package egovframework.example.sample.web;
 
+import java.awt.image.BufferedImage;
 import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -22,6 +23,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
+import java.net.http.HttpRequest;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -30,10 +32,16 @@ import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.sql.Date;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Base64;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+
+import javax.imageio.ImageIO;
+
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.egovframe.rte.fdl.property.EgovPropertyService;
@@ -114,6 +122,8 @@ public class EgovSampleController<E> {
 	
 	@Autowired
 	private FileUnit fileUnit;
+	
+	private static final List<String> COLUMNS =  List.of("HEADER", "ID", "NAME", "DESCRIPTION", "USE_YN", "REG_USER");
 
 	@GetMapping("/sample/{pageName}.do")
 	public String dynamicPageMapping(@PathVariable("pageName") String pageName) {
@@ -250,6 +260,10 @@ public class EgovSampleController<E> {
 			List<?> sampleList = sampleService.selectSampleList(searchVO);
 			int totCnt = sampleService.selectSampleListTotCnt(searchVO);
 			paginationInfo.setTotalRecordCount(totCnt);
+			
+			log.info("sampleList:{}", sampleList);
+			
+			
 
 			/** 3. 결과 Map에 담기 */
 			resultMap.put("resultList", sampleList);
@@ -268,6 +282,49 @@ public class EgovSampleController<E> {
 		}
 
 	}
+	@RequestMapping(value = "/egovSampleImageView.do")
+    @ResponseBody
+    public Map<String, Object> egovSampleImageView(@RequestParam("fileName") String fileName) {
+
+        Map<String, Object> resultMap = new HashMap<String, Object>();
+
+        try {
+            // 보안: 경로 조작(../) 방지 필수!
+//            if (fileName.contains("..") || fileName.contains("/") || fileName.contains("\\")) {
+//                resultMap.put("success", false);
+//                resultMap.put("message", "잘못된 파일명입니다.");
+//                return resultMap;
+//            }
+
+            File imageFile = new File(fileName);
+
+//            if (!imageFile.exists()) {
+//                resultMap.put("success", false);
+//                resultMap.put("message", "파일이 존재하지 않습니다.");
+//                return resultMap;
+//            }
+
+            // 파일을 바이트 배열로 읽어서 base64 인코딩
+            byte[] fileBytes = Files.readAllBytes(imageFile.toPath());
+            String base64Image = Base64.getEncoder().encodeToString(fileBytes);
+
+            // 확장자 추출 (image/jpeg, image/png 등 MIME 타입 결정용)
+            String fileType = fileName.substring(fileName.lastIndexOf(".") + 1).toLowerCase();
+
+            resultMap.put("success", true);
+            resultMap.put("imageBase64", base64Image);
+            resultMap.put("fileType", fileType);
+            resultMap.put("fileName", fileName);
+
+        } catch (IOException e) {
+            resultMap.put("success", false);
+            resultMap.put("message", "이미지를 읽는 중 오류가 발생했습니다: " + e.getMessage());
+        }
+
+        return resultMap;
+    }
+
+
 	/**
 	 * 글 목록을 조회한다. (pageing)
 	 * 
@@ -302,6 +359,21 @@ public class EgovSampleController<E> {
 
 		List<?> sampleList = sampleService.selectSampleList(searchVO);
 		model.addAttribute("resultList", sampleList);
+		
+		/////////////////////////////////////////////////////////////////////////////////////////
+		/** private static final List<String> COLUMNS =  List.of("HEADER", "ID", "NAME", "DESCRIPTION", "USE_YN", "REG_USER"); **/
+		List<Map<String, Object>> hashMapList = sampleService.selectSampleListHashMap(searchVO);
+		List<Map<String, Object>> resultList = new ArrayList<>();
+		for (Map<String, Object> data : hashMapList) {
+		    Map<String, Object> rowMap = new LinkedHashMap<>();
+		    for (String col : COLUMNS) {
+		        rowMap.put(col, data.get(col));
+		    }
+		    resultList.add(rowMap);
+		}
+		log.info("\n🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨\ncolArry:{}", objectMapper.writeValueAsString(resultList)+"\n🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨");
+		/////////////////////////////////////////////////////////////////////////////////////////
+	
 
 		int totCnt = sampleService.selectSampleListTotCnt(searchVO);
 		paginationInfo.setTotalRecordCount(totCnt);
