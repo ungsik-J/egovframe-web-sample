@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="egovframework.example.sample.service.impl.SampleMapper">
+
+	<resultMap id="sample" type="egovframework.example.sample.service.SampleVO">
+		<result property="id" column="id"/>
+		<result property="name" column="name"/>
+		<result property="description" column="description"/>
+		<result property="useYn" column="use_yn"/>
+		<result property="regUser" column="reg_user"/>
+	</resultMap>
+
+	<insert id="insertSample" parameterType="SampleVO">
+
+			INSERT INTO SAMPLE
+				( ID
+				  , NAME
+				  , DESCRIPTION
+				  , USE_YN
+				  , REG_USER )
+			VALUES ( #{id}
+				  , #{name}
+				  , #{description}
+				  , #{useYn}
+				  , #{regUser} )
+
+	</insert>
+
+	<update id="updateSample">
+			UPDATE SAMPLE
+			SET   NAME = IFNULL(#{name}, NAME)
+				, DESCRIPTION = IFNULL(#{description}, DESCRIPTION)
+				, USE_YN = IFNULL(#{useYn}, USE_YN)
+				, FILE_NAME = IFNULL(#{fileName}, FILE_NAME)
+			WHERE ID = #{id}
+	</update>
+
+	<delete id="deleteSample">
+
+			DELETE FROM SAMPLE
+			WHERE ID = #{id}
+
+	</delete>
+
+	<select id="selectSample" resultMap="sample">
+
+			SELECT
+				    ID
+				    , NAME
+				    , DESCRIPTION
+				    , FILE_NAME
+				    , USE_YN
+				    , REG_USER
+			FROM SAMPLE
+			WHERE ID = #{id}
+			AND USE_YN = 'Y'
+
+	</select>
+
+    <select id="selectSampleListAll" parameterType="searchVO" resultType="egovMap">
+        SELECT
+            ID, NAME, DESCRIPTION, USE_YN, REG_USER
+          FROM SAMPLE
+         WHERE 1=1
+         LIMIT 5000
+    </select>
+
+    <select id="selectSampleListHashMap" parameterType="searchVO" resultType="java.util.HashMap">
+        SELECT
+              RPAD('_HEADER_', 20, ' ') AS HEADER
+            , RPAD(ID, 20, ' ') AS ID
+            , RPAD(NAME, 45, ' ') AS NAME
+            , RPAD(DESCRIPTION, 50, ' ') AS DESCRIPTION
+            , RPAD(USE_YN, 5, ' ') AS USE_YN
+            , RPAD(REG_USER, 50, ' ') AS REG_USER
+          FROM SAMPLE
+         WHERE 1=1
+         LIMIT 10
+    </select>
+
+	<select id="selectSampleList" parameterType="searchVO" resultType="egovMap">
+		SELECT
+		    ID, NAME, DESCRIPTION, FILE_NAME, USE_YN, REG_USER
+		FROM SAMPLE
+		WHERE 1=1
+		<if test="searchKeyword != null and searchKeyword != ''">
+		    <choose>
+		        <when test="searchCondition == 0">
+		            AND ID LIKE CONCAT('%', #{searchKeyword}, '%')
+		        </when>
+		        <when test="searchCondition == 1">
+		            AND NAME LIKE CONCAT('%', #{searchKeyword}, '%')
+		        </when>
+		    </choose>
+		</if>
+		AND USE_YN = 'Y'
+		ORDER BY ID DESC
+		LIMIT #{firstIndex}, #{recordCountPerPage}
+	</select>
+
+	<select id="selectSampleListTotCnt" parameterType="searchVO" resultType="int">
+
+			SELECT COUNT(*) totcnt
+			FROM SAMPLE
+			WHERE 1=1
+			AND USE_YN = 'Y'
+			<if test="searchKeyword != null and searchKeyword != ''">
+		        <choose>
+		            <when test="searchCondition == 0">
+						AND ID LIKE CONCAT('%', #{searchKeyword}, '%')
+					</when>
+		            <when test="searchCondition == 1">
+						AND	NAME LIKE CONCAT('%', #{searchKeyword}, '%')
+					</when>
+				</choose>
+			</if>
+	</select>
+
+</mapper>
