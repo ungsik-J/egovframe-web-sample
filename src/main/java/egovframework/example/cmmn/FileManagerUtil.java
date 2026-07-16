@@ -1,6 +1,8 @@
 package egovframework.example.cmmn;
 
 import java.io.IOException;
+import java.lang.management.ManagementFactory;
+import java.lang.management.OperatingSystemMXBean;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -20,10 +22,36 @@ public final class FileManagerUtil {
 		// 인스턴스화 방지 (Utility class)
 	}
 
+	public static void systemInfo() {
+		 System.out.println("OS 이름: " + System.getProperty("os.name"));
+        System.out.println("OS 버전: " + System.getProperty("os.version"));
+        System.out.println("OS 아키텍처: " + System.getProperty("os.arch"));
+        System.out.println("사용자 이름: " + System.getProperty("user.name"));
+        System.out.println("사용자 홈 디렉토리: " + System.getProperty("user.home"));
+        System.out.println("현재 작업 디렉토리: " + System.getProperty("user.dir"));
+        System.out.println("Java 버전: " + System.getProperty("java.version"));
+        System.out.println("Java Vendor: " + System.getProperty("java.vendor"));
+        System.out.println("파일 구분자: " + System.getProperty("file.separator"));
+        System.out.println("경로 구분자: " + System.getProperty("path.separator"));
+        System.out.println("줄바꿈 문자: " + System.getProperty("line.separator"));
+        
+        OperatingSystemMXBean osBean = ManagementFactory.getOperatingSystemMXBean();
+
+        System.out.println("OS 이름: " + osBean.getName());
+        System.out.println("OS 버전: " + osBean.getVersion());
+        System.out.println("아키텍처: " + osBean.getArch());
+        System.out.println("가용 프로세서 수: " + osBean.getAvailableProcessors());
+        System.out.println("시스템 부하 평균: " + osBean.getSystemLoadAverage());
+        
+	}
+	
 	// 사용 예시
 	public static void main(String[] args) {
 		try {
-			String filePath = "/data/upload/temp";
+			
+			systemInfo();
+		
+			String filePath = "/home/john/devHome/file/create/";
 
 			// 파일 생성
 			Path created = createFile(filePath, "sample.txt", "테스트 내용입니다.");
