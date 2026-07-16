@@ -6,6 +6,8 @@ import java.lang.management.OperatingSystemMXBean;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.slf4j.Logger;
@@ -23,46 +25,49 @@ public final class FileManagerUtil {
 	}
 
 	public static void systemInfo() {
-		 System.out.println("OS 이름: " + System.getProperty("os.name"));
-        System.out.println("OS 버전: " + System.getProperty("os.version"));
-        System.out.println("OS 아키텍처: " + System.getProperty("os.arch"));
-        System.out.println("사용자 이름: " + System.getProperty("user.name"));
-        System.out.println("사용자 홈 디렉토리: " + System.getProperty("user.home"));
-        System.out.println("현재 작업 디렉토리: " + System.getProperty("user.dir"));
-        System.out.println("Java 버전: " + System.getProperty("java.version"));
-        System.out.println("Java Vendor: " + System.getProperty("java.vendor"));
-        System.out.println("파일 구분자: " + System.getProperty("file.separator"));
-        System.out.println("경로 구분자: " + System.getProperty("path.separator"));
-        System.out.println("줄바꿈 문자: " + System.getProperty("line.separator"));
-        
-        OperatingSystemMXBean osBean = ManagementFactory.getOperatingSystemMXBean();
+		System.out.println("OS 이름: " + System.getProperty("os.name"));
+		System.out.println("OS 버전: " + System.getProperty("os.version"));
+		System.out.println("OS 아키텍처: " + System.getProperty("os.arch"));
+		System.out.println("사용자 이름: " + System.getProperty("user.name"));
+		System.out.println("사용자 홈 디렉토리: " + System.getProperty("user.home"));
+		System.out.println("현재 작업 디렉토리: " + System.getProperty("user.dir"));
+		System.out.println("Java 버전: " + System.getProperty("java.version"));
+		System.out.println("Java Vendor: " + System.getProperty("java.vendor"));
+		System.out.println("파일 구분자: " + System.getProperty("file.separator"));
+		System.out.println("경로 구분자: " + System.getProperty("path.separator"));
+		System.out.println("줄바꿈 문자: " + System.getProperty("line.separator"));
 
-        System.out.println("OS 이름: " + osBean.getName());
-        System.out.println("OS 버전: " + osBean.getVersion());
-        System.out.println("아키텍처: " + osBean.getArch());
-        System.out.println("가용 프로세서 수: " + osBean.getAvailableProcessors());
-        System.out.println("시스템 부하 평균: " + osBean.getSystemLoadAverage());
-        
+		OperatingSystemMXBean osBean = ManagementFactory.getOperatingSystemMXBean();
+
+		System.out.println("OS 이름: " + osBean.getName());
+		System.out.println("OS 버전: " + osBean.getVersion());
+		System.out.println("아키텍처: " + osBean.getArch());
+		System.out.println("가용 프로세서 수: " + osBean.getAvailableProcessors());
+		System.out.println("시스템 부하 평균: " + osBean.getSystemLoadAverage());
+
 	}
-	
+
 	// 사용 예시
 	public static void main(String[] args) {
 		try {
-			
-			systemInfo();
-		
+
 			String filePath = "/home/john/devHome/file/create/";
-
-			// 파일 생성
-			Path created = createFile(filePath, "sample.txt", "테스트 내용입니다.");
-			log.info("생성됨: " + created);
-
-			log.info("getFiles: {}", Files.exists(created));
-
+			String fileName = "chunkFile";
+			
+		
 			// 파일 삭제
-			boolean deleted = deleteFile(filePath, "sample.txt", Files.exists(created));
+			int deleted = deleteAllFilesByName(filePath, fileName);
 			log.info("삭제 여부: " + deleted);
+			
+			// 파일 생성
+			if(deleted > 0) {
+				Path created = createFile(filePath, fileName, "테스트 내용입니다.");
+				log.info("생성됨: " + created);
 
+				log.info("getFiles: {}", Files.exists(created));
+
+			}
+		
 			// 하루(24시간) 지난 파일 정리
 			deleteOldFiles(filePath, 24 * 60 * 60 * 1000L);
 
@@ -132,6 +137,46 @@ public final class FileManagerUtil {
 		// deleteIfExists: 파일 존재 여부 체크 + 삭제를 원자적으로 처리 (race condition 방지)
 		return (isDeleted ? Files.deleteIfExists(targetFile) : false);
 	}
+
+	/**
+     * dirPath 하위(서브디렉토리 포함)에서 fileName과 이름이 일치하는 모든 파일을 삭제한다.
+     *
+     * @param dirPath  검색을 시작할 최상위 디렉토리
+     * @param fileName 삭제할 파일명 (예: "temp.log")
+     * @return 실제로 삭제된 파일의 개수
+     */
+    public static int deleteAllFilesByName(String dirPath, String fileName) throws IOException {
+        Path directory = Paths.get(dirPath).normalize();
+
+        if (!Files.isDirectory(directory)) {
+            throw new IllegalArgumentException("디렉토리가 아닙니다: " + dirPath);
+        }
+
+        // 경로 조작(Path Traversal) 방지: fileName 자체에 구분자가 들어오지 못하게 차단
+        if (fileName.contains("/") || fileName.contains("\\") || fileName.contains("..")) {
+            throw new SecurityException("잘못된 파일명입니다: " + fileName);
+        }
+
+        int deletedCount = 0;
+
+        // 하위 디렉토리까지 재귀적으로 탐색
+        try (Stream<Path> list = Files.list(directory)) {
+            List<Path> targets = list
+                    .filter(Files::isRegularFile)
+                    .filter(p -> p.getFileName().toString().startsWith(fileName))
+                    .collect(Collectors.toList());
+
+            log.info("targets:{}", targets);
+            
+            for (Path target : targets) {
+                if (Files.deleteIfExists(target)) {
+                    deletedCount++;
+                }
+            }
+        }
+
+        return deletedCount;
+    }
 
 	/**
 	 * 지정된 디렉토리 하위의 모든 파일과 하위 디렉토리를 삭제한다. (디렉토리 자체는 유지) Files.walk를 사용하여 대량 파일도
