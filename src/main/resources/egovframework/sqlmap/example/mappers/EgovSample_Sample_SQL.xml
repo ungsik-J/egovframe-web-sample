@@ -12,7 +12,7 @@
 
 	<insert id="insertSample" parameterType="SampleVO">
 
-			INSERT INTO SAMPLE
+			INSERT INTO sample
 				( ID
 				  , NAME
 				  , DESCRIPTION
@@ -27,7 +27,7 @@
 	</insert>
 
 	<update id="updateSample">
-			UPDATE SAMPLE
+			UPDATE sample
 			SET   NAME = IFNULL(#{name}, NAME)
 				, DESCRIPTION = IFNULL(#{description}, DESCRIPTION)
 				, USE_YN = IFNULL(#{useYn}, USE_YN)
@@ -37,7 +37,7 @@
 
 	<delete id="deleteSample">
 
-			DELETE FROM SAMPLE
+			DELETE FROM sample
 			WHERE ID = #{id}
 
 	</delete>
@@ -51,7 +51,7 @@
 				    , FILE_NAME
 				    , USE_YN
 				    , REG_USER
-			FROM SAMPLE
+			FROM sample
 			WHERE ID = #{id}
 			AND USE_YN = 'Y'
 
@@ -60,7 +60,7 @@
     <select id="selectSampleListAll" parameterType="searchVO" resultType="egovMap">
         SELECT
             ID, NAME, DESCRIPTION, USE_YN, REG_USER
-          FROM SAMPLE
+          FROM sample
          WHERE 1=1
          LIMIT 5000
     </select>
@@ -73,7 +73,7 @@
             , RPAD(DESCRIPTION, 50, ' ') AS DESCRIPTION
             , RPAD(USE_YN, 5, ' ') AS USE_YN
             , RPAD(REG_USER, 50, ' ') AS REG_USER
-          FROM SAMPLE
+          FROM sample
          WHERE 1=1
          LIMIT 10
     </select>
@@ -81,7 +81,7 @@
 	<select id="selectSampleList" parameterType="searchVO" resultType="egovMap">
 		SELECT
 		    ID, NAME, DESCRIPTION, FILE_NAME, USE_YN, REG_USER
-		FROM SAMPLE
+		FROM sample
 		WHERE 1=1
 		<if test="searchKeyword != null and searchKeyword != ''">
 		    <choose>
@@ -101,7 +101,7 @@
 	<select id="selectSampleListTotCnt" parameterType="searchVO" resultType="int">
 
 			SELECT COUNT(*) totcnt
-			FROM SAMPLE
+			FROM sample
 			WHERE 1=1
 			AND USE_YN = 'Y'
 			<if test="searchKeyword != null and searchKeyword != ''">
