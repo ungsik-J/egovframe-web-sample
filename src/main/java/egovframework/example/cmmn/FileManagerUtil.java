@@ -23,20 +23,20 @@ public final class FileManagerUtil {
 	// 사용 예시
 	public static void main(String[] args) {
 		try {
-			String dir = "/data/upload/temp";
+			String filePath = "/data/upload/temp";
 
 			// 파일 생성
-			Path created = createFile(dir, "sample.txt", "테스트 내용입니다.");
+			Path created = createFile(filePath, "sample.txt", "테스트 내용입니다.");
 			log.info("생성됨: " + created);
 
 			log.info("getFiles: {}", Files.exists(created));
 
 			// 파일 삭제
-			boolean deleted = deleteFile(dir, "sample.txt", Files.exists(created));
+			boolean deleted = deleteFile(filePath, "sample.txt", Files.exists(created));
 			log.info("삭제 여부: " + deleted);
 
 			// 하루(24시간) 지난 파일 정리
-			deleteOldFiles(dir, 24 * 60 * 60 * 1000L);
+			deleteOldFiles(filePath, 24 * 60 * 60 * 1000L);
 
 		} catch (IOException e) {
 			e.printStackTrace();
