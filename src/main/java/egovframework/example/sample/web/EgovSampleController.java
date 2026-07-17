@@ -40,10 +40,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import javax.annotation.PostConstruct;
+import javax.annotation.Resource;
 import javax.imageio.ImageIO;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.ibatis.annotations.Property;
 import org.egovframe.rte.fdl.property.EgovPropertyService;
 import org.egovframe.rte.ptl.mvc.tags.ui.pagination.PaginationInfo;
 import org.slf4j.Logger;
@@ -105,9 +108,6 @@ public class EgovSampleController<E> {
 	/** EgovSampleService */
 	private final EgovSampleService sampleService;
 
-	/** EgovPropertyService */
-	private final EgovPropertyService propertiesService;
-
 	/** Validator */
 	private final DefaultBeanValidator beanValidator;
 
@@ -115,15 +115,26 @@ public class EgovSampleController<E> {
 	@Autowired
 	private final MapKeyConverter mapKeyConverter;
 
-	@Value("${Globals.FileUpload.Path}")
-	private String FileUpload;
-	@Value("${Globals.FileCreate.Path}")
-	private String FileCreate;
-	
+	@Resource(name = "propertiesService")
+	private EgovPropertyService propertiesService;
+
+	private String uploadPath;
+
+	private String createPath;
+
+	/**
+	 * 의존성 주입이 완료된 후 자동으로 실행되는 초기화 메서드
+	 */
+	@PostConstruct
+	public void init() {
+		this.createPath = propertiesService.getString("Globals.FileCreate.Path");
+		this.uploadPath = propertiesService.getString("Globals.FileUpload.Path");
+	}
+
 	@Autowired
 	private FileUnit fileUnit;
-	
-	private static final List<String> COLUMNS =  List.of("HEADER", "ID", "NAME", "DESCRIPTION", "USE_YN", "REG_USER");
+
+	private static final List<String> COLUMNS = List.of("HEADER", "ID", "NAME", "DESCRIPTION", "USE_YN", "REG_USER");
 
 	@GetMapping("/sample/{pageName}.do")
 	public String dynamicPageMapping(@PathVariable("pageName") String pageName) {
@@ -134,15 +145,16 @@ public class EgovSampleController<E> {
 		// 들어온 URL 값(pageName)을 그대로 HTML 파일명으로 지정하여 동적 이동
 		return "sample/" + pageName;
 	}
+
 	@SuppressWarnings("unchecked")
 	@RequestMapping(value = "/fileUploadAjax.do", method = RequestMethod.POST)
 	@ResponseBody
-	public ResponseEntity<?>  fileUploadAjax(MultipartHttpServletRequest multipartRequest) {
+	public ResponseEntity<?> fileUploadAjax(MultipartHttpServletRequest multipartRequest) {
 		HttpHeaders headers = new HttpHeaders();
 		headers.setContentType(new MediaType("application", "json", StandardCharsets.UTF_8));
 		log.info("\nSTART::fileUploadAjax {} ⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥");
 		ObjectMapper objectMapper = new ObjectMapper();
-		
+
 		try {
 			log.info("multipartRequest : {}", objectMapper.writeValueAsString(multipartRequest.getParameterMap()));
 		} catch (JsonProcessingException e) {
@@ -154,43 +166,44 @@ public class EgovSampleController<E> {
 		try {
 
 			resultMap = fileUnit.fileUploadAjax(multipartRequest);
-			
-			log.info("fileUploadAjax.resultMap:{}", objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(resultMap) );
-			
-			if("sucess".equals(resultMap.get("result"))) {
+
+			log.info("fileUploadAjax.resultMap:{}",
+					objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(resultMap));
+
+			if ("sucess".equals(resultMap.get("result"))) {
 				Object paramMapObj = resultMap.get("paramMap");
 				Map<String, Object> paramMap = (Map<String, Object>) paramMapObj;
-				
-				log.info("1{}" , paramMap.get("fileName"));
-				log.info("1{}" , paramMap.get("filePath"));
-				log.info("1{}" , paramMap.get("id"));
-				
+
+				log.info("1{}", paramMap.get("fileName"));
+				log.info("1{}", paramMap.get("filePath"));
+				log.info("1{}", paramMap.get("id"));
+
 				SampleVO samplevo = new SampleVO();
-				
-				String fileName = paramMap.get("filePath")+""+paramMap.get("fileName");
-				samplevo.setId(String.valueOf( paramMap.get("id")));
-				samplevo.setName(String.valueOf( paramMap.get("name")));
-				samplevo.setDescription(String.valueOf( paramMap.get("description")));
-				samplevo.setUseYn(String.valueOf( paramMap.get("useYn")));
+
+				String fileName = paramMap.get("filePath") + "" + paramMap.get("fileName");
+				samplevo.setId(String.valueOf(paramMap.get("id")));
+				samplevo.setName(String.valueOf(paramMap.get("name")));
+				samplevo.setDescription(String.valueOf(paramMap.get("description")));
+				samplevo.setUseYn(String.valueOf(paramMap.get("useYn")));
 				samplevo.setFileName(fileName);
-				
+
 				int updateCnt = sampleService.updateSample(samplevo);
-				
-				if(updateCnt > 0) {
+
+				if (updateCnt > 0) {
 					resultMap.put("result", resultMap.get("result"));
-				}else {
+				} else {
 					resultMap.put("result", "updatefail");
 				}
 			}
-			
-			
+
 			return new ResponseEntity<>(objectMapper.writeValueAsString(resultMap), headers, HttpStatus.OK);
 		} catch (Exception e) {
 			e.printStackTrace();
 			resultMap.put("resultCode", "fail");
 			resultMap.put("resultMsg", e.getMessage());
 			try {
-				return new ResponseEntity<>(objectMapper.writeValueAsString(resultMap), headers, HttpStatus.valueOf(-1));
+				return new ResponseEntity<>(objectMapper.writeValueAsString(resultMap), headers,
+						HttpStatus.valueOf(-1));
 			} catch (JsonProcessingException e1) {
 				// TODO Auto-generated catch block
 				e1.printStackTrace();
@@ -199,11 +212,12 @@ public class EgovSampleController<E> {
 		log.info("\nEND::fileUploadAjax {}⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤");
 		return null;
 	}
+
 	@RequestMapping(value = "/egovSampleListAjaxDownload.do")
 	@ResponseBody
 	public ResponseEntity<?> egovSampleListAjaxDownload(@ModelAttribute("searchVO") SampleDefaultVO searchVO)
 			throws IOException {
-		
+
 		ObjectMapper mapper = new ObjectMapper();
 		Map<String, Object> resultMap = new HashMap<>();
 		ResponseEntity<?> responseentity = new ResponseEntity<>(HttpStatus.NO_CONTENT);
@@ -212,11 +226,11 @@ public class EgovSampleController<E> {
 			SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
 			long startTime = System.currentTimeMillis();
 			log.info("egovSampleListAjaxDownload.startTime : {}", sdf.format(new Date(startTime)));
-			
+
 			resultMap = fileUnit.createChunkFile(sampleService.selectSampleListAll(searchVO));
-			
+
 			responseentity = new ResponseEntity<>(mapper.writeValueAsString(resultMap), HttpStatus.OK);
-			
+
 		} catch (Exception e) {
 			e.printStackTrace();
 			resultMap.put("result", "fail");
@@ -260,10 +274,8 @@ public class EgovSampleController<E> {
 			List<?> sampleList = sampleService.selectSampleList(searchVO);
 			int totCnt = sampleService.selectSampleListTotCnt(searchVO);
 			paginationInfo.setTotalRecordCount(totCnt);
-			
+
 			log.info("sampleList:{}", sampleList);
-			
-			
 
 			/** 3. 결과 Map에 담기 */
 			resultMap.put("resultList", sampleList);
@@ -282,48 +294,60 @@ public class EgovSampleController<E> {
 		}
 
 	}
+
 	@RequestMapping(value = "/egovSampleImageView.do")
-    @ResponseBody
-    public Map<String, Object> egovSampleImageView(@RequestParam("fileName") String fileName) {
+	@ResponseBody
+	public ResponseEntity<?> egovSampleImageView(@RequestParam("fileName") String fileName) {
 
-        Map<String, Object> resultMap = new HashMap<String, Object>();
+		Map<String, Object> resultMap = new HashMap<String, Object>();
+		ObjectMapper mapper = new ObjectMapper();
+		// String uploadPath = propertiesService.getString("Globals.FileUpload.Path");
+		// // /home/john/devHome/file/upload/
 
-        try {
-            // 보안: 경로 조작(../) 방지 필수!
-//            if (fileName.contains("..") || fileName.contains("/") || fileName.contains("\\")) {
-//                resultMap.put("success", false);
-//                resultMap.put("message", "잘못된 파일명입니다.");
-//                return resultMap;
-//            }
+		try {
+			// 보안: 경로 조작(../) 방지 필수!
+			if (fileName.contains("..") || fileName.contains("/") || fileName.contains("\\")) {
+				resultMap.put("success", false);
+				resultMap.put("message", "잘못된 파일명입니다.");
+				
+				return new ResponseEntity<>(resultMap, HttpStatus.INTERNAL_SERVER_ERROR);
+			}
 
-            File imageFile = new File(fileName);
+			log.info("uploadPath:{}, fileName:{}", uploadPath , fileName);
+			File imageFile = new File(uploadPath + fileName);
 
-//            if (!imageFile.exists()) {
-//                resultMap.put("success", false);
-//                resultMap.put("message", "파일이 존재하지 않습니다.");
-//                return resultMap;
-//            }
+			if (!imageFile.exists()) {
+				resultMap.put("success", false);
+				resultMap.put("message", "파일이 존재하지 않습니다.");
+				return new ResponseEntity<>(resultMap, HttpStatus.INTERNAL_SERVER_ERROR);
+			}
 
-            // 파일을 바이트 배열로 읽어서 base64 인코딩
-            byte[] fileBytes = Files.readAllBytes(imageFile.toPath());
-            String base64Image = Base64.getEncoder().encodeToString(fileBytes);
+			// 파일을 바이트 배열로 읽어서 base64 인코딩
+			byte[] fileBytes = Files.readAllBytes(imageFile.toPath());
+			String base64Image = Base64.getEncoder().encodeToString(fileBytes);
 
-            // 확장자 추출 (image/jpeg, image/png 등 MIME 타입 결정용)
-            String fileType = fileName.substring(fileName.lastIndexOf(".") + 1).toLowerCase();
+			// 확장자 추출 (image/jpeg, image/png 등 MIME 타입 결정용)
+			String fileType = fileName.substring(fileName.lastIndexOf(".") + 1).toLowerCase();
 
-            resultMap.put("success", true);
-            resultMap.put("imageBase64", base64Image);
-            resultMap.put("fileType", fileType);
-            resultMap.put("fileName", fileName);
+			resultMap.put("success", true);
+			resultMap.put("imageBase64", base64Image);
+			resultMap.put("fileType", fileType);
+			resultMap.put("fileName", fileName);
 
-        } catch (IOException e) {
-            resultMap.put("success", false);
-            resultMap.put("message", "이미지를 읽는 중 오류가 발생했습니다: " + e.getMessage());
-        }
+			return new ResponseEntity<>(mapper.writeValueAsString(resultMap), HttpStatus.OK);
+		} catch (IOException e) {
+			resultMap.put("success", false);
+			resultMap.put("message", "이미지를 읽는 중 오류가 발생했습니다: " + e.getMessage());
+		}
 
-        return resultMap;
-    }
-
+		try {
+			return new ResponseEntity<>(mapper.writeValueAsString(resultMap), HttpStatus.OK);
+		} catch (JsonProcessingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		};
+		return null;
+	}
 
 	/**
 	 * 글 목록을 조회한다. (pageing)
@@ -359,21 +383,24 @@ public class EgovSampleController<E> {
 
 		List<?> sampleList = sampleService.selectSampleList(searchVO);
 		model.addAttribute("resultList", sampleList);
-		
+
 		/////////////////////////////////////////////////////////////////////////////////////////
-		/** private static final List<String> COLUMNS =  List.of("HEADER", "ID", "NAME", "DESCRIPTION", "USE_YN", "REG_USER"); **/
+		/**
+		 * private static final List<String> COLUMNS = List.of("HEADER", "ID", "NAME",
+		 * "DESCRIPTION", "USE_YN", "REG_USER");
+		 **/
 		List<Map<String, Object>> hashMapList = sampleService.selectSampleListHashMap(searchVO);
 		List<Map<String, Object>> resultList = new ArrayList<>();
 		for (Map<String, Object> data : hashMapList) {
-		    Map<String, Object> rowMap = new LinkedHashMap<>();
-		    for (String col : COLUMNS) {
-		        rowMap.put(col, data.get(col));
-		    }
-		    resultList.add(rowMap);
+			Map<String, Object> rowMap = new LinkedHashMap<>();
+			for (String col : COLUMNS) {
+				rowMap.put(col, data.get(col));
+			}
+			resultList.add(rowMap);
 		}
-		log.info("\n🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨\ncolArry:{}", objectMapper.writeValueAsString(resultList)+"\n🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨");
+		log.info("\n🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨\ncolArry:{}",
+				objectMapper.writeValueAsString(resultList) + "\n🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨");
 		/////////////////////////////////////////////////////////////////////////////////////////
-	
 
 		int totCnt = sampleService.selectSampleListTotCnt(searchVO);
 		paginationInfo.setTotalRecordCount(totCnt);

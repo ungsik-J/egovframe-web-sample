@@ -226,6 +226,39 @@ table.data-table{
 }
 .empty-state .icon{ font-size:26px; display:block; margin-bottom:10px; }
 
+/* ===================== File chip (검색/미리보기 아이콘) ===================== */
+.file-chip{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    padding:5px 10px 5px 8px;
+    border-radius:999px;
+    color:var(--ink-soft);
+    cursor:pointer;
+    transition:background .15s var(--ease), color .15s var(--ease);
+}
+.file-chip:hover{
+    background:var(--accent-soft);
+    color:var(--accent-600);
+}
+.file-chip .icon-search{
+    flex-shrink:0;
+    color:var(--muted);
+    transition:color .15s var(--ease), transform .15s var(--ease);
+}
+.file-chip:hover .icon-search{
+    color:var(--accent-600);
+    transform:scale(1.08);
+}
+.file-chip .file-name-text{
+    font-size:13px;
+    max-width:180px;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+.no-file-dash{ color:var(--muted); }
+
 /* ===================== Pagination ===================== */
 .pagination-wrap{
     display:flex; align-items:center; justify-content:center; gap:4px;
@@ -423,10 +456,62 @@ table.data-table{
 .toast.error{ background:var(--danger); }
 .toast .dot{ width:6px; height:6px; border-radius:50%; background:currentColor; flex-shrink:0; opacity:.8; }
 
+/* ===================== [NEW] 이미지 라이트박스 모달 UI ===================== */
+.img-modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(15, 23, 42, 0.65); /* 딥 다크 톤 배경 */
+    backdrop-filter: blur(10px); /* 글래스모피즘 효과 */
+    -webkit-backdrop-filter: blur(10px);
+    display: flex; justify-content: center; align-items: center;
+    z-index: 500; /* 최상단 배치 */
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.3s var(--ease);
+}
+.img-modal-overlay.active { opacity: 1; pointer-events: auto; }
+
+.img-modal-wrapper {
+    position: relative;
+    max-width: 85%; max-height: 85%;
+    display: flex; flex-direction: column; align-items: center;
+    transform: scale(0.92);
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); /* 튕기는 듯한 바운스 효과 */
+}
+.img-modal-overlay.active .img-modal-wrapper { transform: scale(1); }
+
+.img-modal-wrapper img {
+    max-width: 100%; max-height: 75vh;
+    object-fit: contain;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    border: 1px solid rgba(255,255,255,0.1);
+}
+.img-modal-caption {
+    margin-top: 16px;
+    color: #fff; font-size: 14px; font-weight: 600;
+    background: rgba(0, 0, 0, 0.4);
+    padding: 6px 16px; border-radius: 999px;
+    letter-spacing: -0.01em;
+}
+.img-modal-close {
+    position: absolute; top: -56px; right: 0;
+    width: 40px; height: 40px; border-radius: 50%;
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    color: #fff; font-size: 24px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    line-height: 0; transition: all 0.2s;
+}
+.img-modal-close:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: rotate(90deg);
+}
+
 @media (max-width: 600px){
     .app-shell{ padding:24px 16px 60px; }
     .filter-bar{ border-radius:var(--radius-md); }
     .filter-bar input[type="text"]{ order:3; flex-basis:100%; }
+    .img-modal-wrapper { max-width: 95%; }
+    .img-modal-close { top: auto; bottom: -56px; right: calc(50% - 20px); } /* 모바일 가시성 배려 */
 }
 
 @media (prefers-reduced-motion: reduce){
@@ -478,14 +563,14 @@ table.data-table{
             </thead>
             <tbody id="listBody">
                 <tr>
-                    <td colspan="3">
+                    <td colspan="4">
                         <div class="empty-state">데이터를 불러오는 중입니다…</div>
                     </td>
                 </tr>
             </tbody>
         </table>
     </div>
-	<img id="previewImg" src="">>
+
     <div id="pagingArea" class="pagination-wrap"></div>
 </div>
 
@@ -552,6 +637,16 @@ table.data-table{
     </div>
 </div>
 
+<!-- ================= [NEW] 최신 트렌드 이미지 팝업 모달 마크업 ================= -->
+<div id="imageLightboxModal" class="img-modal-overlay">
+    <div class="img-modal-wrapper">
+        <button type="button" class="img-modal-close" onclick="fn_close_img_modal();">&times;</button>
+        <img id="lightboxImg" src="" alt="미리보기 이미지">
+        <div id="lightboxCaption" class="img-modal-caption"></div>
+    </div>
+</div>
+
+
 <script type="text/javascript">
 $(document).ready(function () {
     fn_select_list();
@@ -563,10 +658,21 @@ $(document).ready(function () {
         }
     });
 
-    /* ESC 키로 드로어 닫기 */
+    /* 이미지 모달 바깥(오버레이) 클릭 시 닫기 */
+    $("#imageLightboxModal").on("click", function (e) {
+        if (e.target.id === "imageLightboxModal") {
+            fn_close_img_modal();
+        }
+    });
+
+    /* ESC 키로 모든 모달/드로어 통합 닫기 */
     $(document).on("keydown", function (e) {
-        if (e.key === "Escape" && $("#detailModal").hasClass("active")) {
-            fn_close_modal();
+        if (e.key === "Escape") {
+            if ($("#imageLightboxModal").hasClass("active")) {
+                fn_close_img_modal();
+            } else if ($("#detailModal").hasClass("active")) {
+                fn_close_modal();
+            }
         }
     });
 
@@ -589,8 +695,6 @@ $(document).ready(function () {
             });
         }
     });
-    
-
 });
 
 /* ===================== Toast ===================== */
@@ -622,36 +726,48 @@ function showConfirmDialog(message) {
         $("#confirmCancelBtn").on("click", function () { cleanup(false); });
     });
 }
-function fn_fileOver(el, fileName) {
-    console.log('마우스 오버:', fileName);
-    if(fileName){
-    	el.style.backgroundColor = '#f0f8ff';
-    	
-    	$.ajax({
-    	    type: "GET",  // ✅ GET 또는 POST로 수정
-    	    url: "<c:url value='/egovSampleImageView.do'/>",
-    	    data: { fileName: fileName },
-    	    dataType: "json",
-    	    cache: false,
-    	    success: function (data) {
-    	        console.log(data);
-    	        // 예: base64 이미지를 화면에 표시
-    	        if (data.imageBase64) {
-    	            $('#previewImg').attr('src', 'data:image/' + data.fileType + ';base64,' + data.imageBase64);
-    	        }
-    	    },
-    	    error: function (xhr, status, error) {
-    	        showToast("데이터를 불러오는 중 오류가 발생했습니다.", "error");
-    	    }
-    	});
-    }
-    
+
+/* ===================== [NEW] 이미지 모달 제어 함수 ===================== */
+function fn_close_img_modal() {
+    $("#imageLightboxModal").removeClass("active");
+    setTimeout(function() {
+        $("#lightboxImg").attr("src", ""); // 리소스 초기화로 흔들림 방지
+    }, 300);
 }
 
-function fn_fileOut(el) {
-    el.style.backgroundColor = '';
-    
+function fn_fileClick(el, fileName) {
+    console.log('클릭한 파일:', fileName);
+    if(fileName){
+        $.ajax({
+            type: "GET",
+            url: "<c:url value='/egovSampleImageView.do'/>",
+            data: { fileName: fileName },
+            dataType: "json",
+            cache: false,
+            success: function (data) {
+                console.log(data);
+                
+                // ✅ Controller가 보내주는 데이터 필드명(예: imageBase64, fileType)에 따라 맞춰 처리합니다.
+                if (data.imageBase64) {
+                    var imgSrc = 'data:image/' + (data.fileType || 'png') + ';base64,' + data.imageBase64;
+                    
+                    $("#lightboxImg").attr("src", imgSrc);
+                    $("#lightboxCaption").text(fileName);
+                    
+                    // 모달 활성화 및 바디 스크롤 차단(UX 향상)
+                    $("#imageLightboxModal").addClass("active");
+                    // $("body").css("overflow", "hidden");
+                } else {
+                    showToast("이미지 데이터가 올바르지 않습니다.", "error");
+                }
+            },
+            error: function (xhr, status, error) {
+                showToast("데이터를 불러오는 중 오류가 발생했습니다.", "error");
+            }
+        });
+    }
 }
+
 /* ===================== AJAX 목록 조회 ===================== */
 function fn_select_list() {
     var formData = $("#searchForm").serialize();
@@ -670,18 +786,34 @@ function fn_select_list() {
                 var html = "";
 
                 if (list.length === 0) {
-                    html += "<tr><td colspan='3'><div class='empty-state'><span class='icon'>&#128269;</span>조회된 데이터가 없습니다.</div></td></tr>";
+                    html += "<tr><td colspan='4'><div class='empty-state'><span class='icon'>&#128269;</span>조회된 데이터가 없습니다.</div></td></tr>";
                 } else {
                     $.each(list, function (index, item) {
                         var rowNum = pagination.totalRecordCount + 1 - ((searchVO.pageIndex - 1) * searchVO.pageSize + (index + 1));
-					
-                        let file = (item.fileName) ? item.fileName.split("/").pop() : ""; //(item.fileName) ? "Y" : "N";
-						//file += item.fileName.split("/").pop();
+
+                        let file = (item.fileName) ? item.fileName.split("/").pop() : "";
+
+                        /* 파일명 셀: 돋보기 아이콘 + 파일명 chip (클릭 시 미려한 팝업 모달 오픈) */
+                        var fileCell;
+                        if (file) {
+                            fileCell =
+                                "<span class='file-chip' onclick=\"fn_fileClick(this,'" + file + "')\" >" +
+                                    "<svg class='icon-search' width='15' height='15' viewBox='0 0 24 24' fill='none' " +
+                                        "stroke='currentColor' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'>" +
+                                        "<circle cx='11' cy='11' r='7'></circle>" +
+                                        "<line x1='21' y1='21' x2='16.65' y2='16.65'></line>" +
+                                    "</svg>" +
+                                    "<span class='file-name-text mono'>" + file + "</span>" +
+                                "</span>";
+                        } else {
+                            fileCell = "<span class='no-file-dash'>—</span>";
+                        }
+
                         html += "<tr>";
                         html += "  <td class='col-no mono'>" + rowNum + "</td>";
                         html += "  <td class='col-id mono'>" + item.id + "</td>";
                         html += "  <td><a href='javascript:void(0);' class='row-link' onclick='fn_detail(" + JSON.stringify(item) + ")'>" + item.name + "</a></td>";
-                        html += "  <td class='col-id mono' name='fileName' onmouseover='fn_fileOver(this, \"" + item.fileName + "\")' onmouseout='fn_fileOut(this)'>" + file + "</td>";
+                        html += "  <td class='col-id' name='fileName'>" + fileCell + "</td>";
                         html += "</tr>";
                     });
                 }
@@ -764,7 +896,7 @@ function fn_update_sample() {
         $.ajax({
             type: "POST",
             enctype: 'multipart/form-data',
-            url: "<c:url value='/fileUploadAjax.do'/>", // ⚠️ 전자정부 서버 Controller 맵핑 URL에 맞게 수정하세요.
+            url: "<c:url value='/fileUploadAjax.do'/>", 
             data: formData,
             processData: false,
             contentType: false,

@@ -18,8 +18,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import javax.annotation.PostConstruct;
+import javax.annotation.Resource;
+
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.egovframe.rte.fdl.property.EgovPropertyService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -36,19 +40,30 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 @Service
 public class FileUnit {
 	private static final Logger log = LoggerFactory.getLogger(FileUnit.class);
-	@Value("${Globals.FileUpload.Path}")
-	private String FileUpload;
-	@Value("${Globals.FileCreate.Path}")
-	private String FileCreate;
+
+	@Resource(name = "propertiesService")
+	private EgovPropertyService propertiesService;
+	private String uploadPath;
+	private String createPath;
+
+	/**
+	 * 의존성 주입이 완료된 후 자동으로 실행되는 초기화 메서드
+	 */
+	@PostConstruct
+	public void init() {
+		this.createPath = propertiesService.getString("Globals.FileCreate.Path");
+		this.uploadPath = propertiesService.getString("Globals.FileUpload.Path");
+	}
 	
 	/** public static void main(String[] args) { } **/
 	
 	public Map<String, Object> createChunkFile(List<?> param) throws IOException {
 		
-		log.info("uploadPath:{}", FileUpload);
+		log.info("createPath:{}", createPath);
 		Map<String, Object> resultMap = new HashMap<>();
-		String filePath = FileCreate+"chunkFile"; // ${Globals.filePath}/file/create/
-		File file = new File(filePath);
+		String filePath = createPath;
+		String fileName = "chunkFile";
+		File file = new File(filePath + fileName);
 		File parentDir = file.getParentFile();
 		if (parentDir != null && !parentDir.exists()) {
 			parentDir.mkdirs();
@@ -215,7 +230,7 @@ public class FileUnit {
 	public Map<String, Object> fileUploadAjax(MultipartHttpServletRequest multipartRequest) {
 		log.info("\nSTART::fileUploadAjax {} ⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥");
 		ObjectMapper objectMapper = new ObjectMapper();
-		String filePath = FileUpload+"sampleList/"; // {Globals.filePath}/file/uplpad/
+		String filePath = uploadPath;  //FileUpload+"sampleList/"; // {Globals.filePath}/file/uplpad/
 		
 		log.info("filePath:{}", filePath);
 		
