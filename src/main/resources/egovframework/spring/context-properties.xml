@@ -1,20 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.0.xsd">
 
-	<bean name="propertiesService" class="org.egovframe.rte.fdl.property.impl.EgovPropertyServiceImpl" destroy-method="destroy">
+	<bean name="propertiesService"
+		class="org.egovframe.rte.fdl.property.impl.EgovPropertyServiceImpl"
+		destroy-method="destroy">
 		<property name="properties">
-	        <map>
-	        	<entry key="pageUnit" value="10"/>
-	        	<entry key="pageSize" value="10"/>
-	        </map>
+			<map>
+				<entry key="pageUnit" value="10" />
+				<entry key="pageSize" value="10" />
+			</map>
+		</property>
+		<property name="extFileName">
+			<set>
+				<map>
+					<entry key="encoding" value="UTF-8" />
+					<entry key="filename"
+						value="classpath:/egovframework/egovProps/globals.properties" />
+				</map>
+			</set>
 		</property>
 	</bean>
-	<bean class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
-    <property name="locations">
-        <list>
-            <value>classpath:/egovframework/egovProps/globals.properties</value>
-        </list>
-    </property>
-</bean>
 </beans>	
