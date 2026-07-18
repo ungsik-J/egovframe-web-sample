@@ -14,6 +14,36 @@
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 	<link href="css/egovframework/indexUI.css" rel="stylesheet" />
+	<style>
+	/* 화면 전체를 흐리게 덮는 레이어 */
+#loadingBar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.4);
+    z-index: 9999; /* 최상단에 보이도록 설정 */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* 동그라미 스피너 애니메이션 */
+.spinner {
+    width: 50px;
+    height: 50px;
+    border: 5px solid #f3f3f3;
+    border-top: 5px solid #3498db;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+	</style>
 </head>
 <body>
 <div id="toastStack"></div>
@@ -39,7 +69,7 @@
             <label class="toggle-chip">
                 <input type="checkbox" id="checked_download" name="checked_download" />
                 <span class="switch"></span>
-                파일 포함 다운로드
+                대용량 파일 생성
             </label>
             <button type="button" class="btn btn-primary" onclick="fn_select_list();">검색</button>
         </div>
@@ -141,6 +171,10 @@
     </div>
 </div>
 
+<!-- ================= loadingBar ================= -->
+<div id="loadingBar" style="display: none;">
+    <div class="spinner"></div>
+</div>
 
 <script type="text/javascript">
 $(document).ready(function () {
@@ -173,21 +207,34 @@ $(document).ready(function () {
 
     $("#checked_download").on("change", function (e) {
         if (e.target.checked) {
-            $.ajax({
-                type: "GET",
-                url: "<c:url value='/egovSampleListAjaxDownload.do'/>",
-                data: null,
-                dataType: "json",
-                cache: false,
-                success: function (data) {
-                	console.log( data )
-                    showToast("다운로드 준비가 완료되었습니다.", "success");
-                },
-                error: function (xhr, status, error) {
-                    console.error(xhr, status, error);
-                    showToast("다운로드 처리 중 오류가 발생했습니다.", "error");
-                }
-            });
+        	$.ajax({
+        	    type: "GET",
+        	    url: "<c:url value='/egovSampleListAjaxDownload.do'/>",
+        	    data: null,
+        	    dataType: "json",
+        	    cache: false,
+        	    beforeSend: function() {
+        	        // [원리] AJAX 요청이 시작되기 직전에 실행
+        	        // 로딩바 표시 (예: 로딩 DIV를 보임)
+        	        $('#loadingBar').show(); 
+        	    },
+        	    success: function (data) {
+        	        console.log(data);
+        	        showToast("다운로드 준비가 완료되었습니다.", "success");
+        	    },
+        	    error: function (xhr, status, error) {
+        	        console.error(xhr, status, error);
+        	        showToast("다운로드 처리 중 오류가 발생했습니다.", "error");
+        	    },
+        	    complete: function() {
+        	        // [원리] success든 error든 요청이 끝나면 무조건 실행
+        	        // 로딩바 숨김
+        	    	setTimeout(() => {
+        	    	    console.log("setTimeout-->>>>>");
+        	    	    $('#loadingBar').hide();
+        	    	}, 5000);
+        	    }
+        	});
         }
     });
 });
