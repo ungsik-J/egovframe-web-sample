@@ -59,7 +59,11 @@
 
     <select id="selectSampleListAll" parameterType="searchVO" resultType="egovMap">
         SELECT
-            ID, NAME, DESCRIPTION, USE_YN, REG_USER
+            ID
+            , NAME
+            , CONCAT(DESCRIPTION, char(10)) AS DESCRIPTION
+            , USE_YN
+            , REG_USER
           FROM sample
          WHERE 1=1
          -- LIMIT 5000
