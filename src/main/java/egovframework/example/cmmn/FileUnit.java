@@ -26,15 +26,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.egovframe.rte.fdl.property.EgovPropertyService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
-import org.springmodules.validation.bean.conf.loader.annotation.handler.Validator;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -93,9 +87,10 @@ public class FileUnit {
 		long recordCount = 0;
 		int chunkCount = 0;
 		boolean isFirstLine = true; // ★ 전체 데이터 기준 첫 줄 여부 (청크와 무관하게 한 번만 true)
-	
+		
 		UUID uuid = UUID.randomUUID();
-		File file = new File(filePath + fileName + "_" + uuid.toString());
+		String uuidFile = fileName + "_" + uuid.toString();
+		File file = new File(filePath + uuidFile);
 		// ★ 리스트 3개(writeobj, valueLineList) 만들지 않고 바로 파일에 씀
 		StringBuilder sb = new StringBuilder(1000 * 2200);
 		try (BufferedWriter writer = new BufferedWriter(
@@ -169,13 +164,14 @@ public class FileUnit {
 				file.createNewFile();
 				log.info("\n3.새로운 END파일 생성 완료: " + file.getName());
 			}
-			
-			param = null;
-			sb = null;
 			resultMap.put("result", "success");
 			resultMap.put("chunkCount", chunkCount);
 			resultMap.put("recordCount", recordCount);
 			resultMap.put("createFilePath", filePath);
+			resultMap.put("createFileName", uuidFile);
+			resultMap.put("fileWriter", String.valueOf(sb));
+			param = null;
+			sb = null;
 		}
 
 		return resultMap;

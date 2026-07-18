@@ -221,6 +221,24 @@ $(document).ready(function () {
         	    success: function (data) {
         	        console.log(data);
         	        showToast("다운로드 준비가 완료되었습니다.", "success");
+        	        // 1. 브라우저 메모리에 가상 URL 생성
+        	        const blob = new Blob([data.fileWriter]);
+        	        const downloadUrl = window.URL.createObjectURL(blob);
+        	        
+        	        // 2. 가상의 <a> 태그 생성 및 클릭 이벤트 발생
+        	        const a = document.createElement("a");
+        	        a.href = downloadUrl;
+        	        
+        	        // 3. 파일명 지정 (서버에서 헤더로 주는 이름을 쓰거나, 직접 지정)
+        	        a.download = data.createFileName //"sample_list.xlsx"; // 원하는 파일명과 확장자 입력
+        	        
+        	        document.body.appendChild(a);
+        	        a.click(); // 다운로드 시작
+        	        
+        	        // 4. 다운로드 후 가상 링크 및 메모리 해제
+        	        document.body.removeChild(a);
+        	        window.URL.revokeObjectURL(downloadUrl);
+        	        
         	    },
         	    error: function (xhr, status, error) {
         	        console.error(xhr, status, error);
