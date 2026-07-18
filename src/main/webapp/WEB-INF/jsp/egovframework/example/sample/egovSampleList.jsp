@@ -19,9 +19,9 @@
 <div id="toastStack"></div>
 <div class="app-shell">
 
-    <div class="app-header" onclick="window.location.reload();">
+    <div class="app-header">
         <div class="mark">전</div>
-        <div class="titles">
+        <div class="titles" onclick="window.location.reload();">
             <h1>전자정부 표준 샘플 목록</h1>
             <p>Runtime Environment · Sample Data Console</p>
         </div>
