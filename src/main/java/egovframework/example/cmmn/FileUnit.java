@@ -76,7 +76,7 @@ public class FileUnit {
 		// ★ 리스트 3개(writeobj, valueLineList) 만들지 않고 바로 파일에 씀
 		StringBuilder sb = new StringBuilder(1000 * 2200);
 		try (BufferedWriter writer = new BufferedWriter(
-				new OutputStreamWriter(new FileOutputStream(filePath), StandardCharsets.UTF_8), 1024 * 1024)) {
+				new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8), 1024 * 1024)) {
 
 			for (Object item : param) {
 				if (!(item instanceof Map)) {
