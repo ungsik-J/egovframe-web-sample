@@ -110,7 +110,7 @@
 		        </when>
 		    </choose>
 		</if>
-		and use_yn = 'Y'
+		-- and use_yn = 'Y'
 		order by id desc
 		limit #{firstIndex}, #{recordCountPerPage}
 	</select>
