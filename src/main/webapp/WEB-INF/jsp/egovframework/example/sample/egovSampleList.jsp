@@ -53,6 +53,7 @@
                     <th class="col-id">ID</th>
                     <th>이름</th>
                     <th>파일</th>
+                    <th>사용</th>
                 </tr>
             </thead>
             <tbody id="listBody">
@@ -273,6 +274,7 @@ function fn_select_list() {
         dataType: "json",
         cache: false,
         success: function (data) {
+        	console.log(data)
             if (data.result === "SUCCESS") {
                 var list = data.resultList;
                 var pagination = data.paginationInfo;
@@ -307,7 +309,8 @@ function fn_select_list() {
                         html += "  <td class='col-no mono'>" + rowNum + "</td>";
                         html += "  <td class='col-id mono'>" + item.id + "</td>";
                         html += "  <td><a href='javascript:void(0);' class='row-link' onclick='fn_detail(" + JSON.stringify(item) + ")'>" + item.name + "</a></td>";
-                        html += "  <td class='col-id' name='fileName'>" + fileCell + "</td>";
+                        html += "  <td class='col-id' name='fileName'>" + fileCell + "</td>"
+                        html += "  <td class='col-id' name='useYn'>" + item.useYn + "</td>";
                         html += "</tr>";
                     });
                 }

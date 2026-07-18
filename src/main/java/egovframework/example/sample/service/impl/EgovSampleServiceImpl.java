@@ -135,6 +135,15 @@ public class EgovSampleServiceImpl extends EgovAbstractServiceImpl implements Eg
 		return sampleDAO.selectSampleListAll(searchVO);
 	}
 	@Override
+	public String selectSampleListAllProdMax() throws Exception {
+		return sampleDAO.selectSampleListAllProdMax();
+	}
+	@Override
+	public int updateSampleProdNumMax() throws Exception {
+		
+		return sampleDAO.updateSampleProdNumMax();
+	}
+	@Override
 	public List<Map<String, Object>> selectSampleListHashMap(SampleDefaultVO searchVO) throws Exception {
 		return sampleDAO.selectSampleListHashMap(searchVO);
 	}

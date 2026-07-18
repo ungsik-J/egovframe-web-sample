@@ -59,12 +59,33 @@
 
     <select id="selectSampleListAll" parameterType="searchVO" resultType="egovMap">
         SELECT
-            ID, NAME, DESCRIPTION, USE_YN, REG_USER
+            ID, NAME, DESCRIPTION, USE_YN, REG_USER, PROD_NUM
           FROM SAMPLE
          WHERE 1=1
-         LIMIT 5000
+         AND USE_YN = 'Y'
+         -- LIMIT 5000
     </select>
-
+    
+    <select id="selectSampleListAllProdMax" parameterType="searchVO" resultType="String">
+		SELECT LPAD(IFNULL(MAX(PROD_NUM), 0) + 1, 6, '0') AS PROD_NUM_MAX
+		  FROM SAMPLE
+		 WHERE 1 = 1
+		   AND USE_YN = 'Y';
+    </select>
+    
+    <update id="updateSampleProdNumMax">
+		UPDATE SAMPLE Z
+		JOIN (
+		    -- 전체 최고값 + 1을 구하고 6자리로 패딩
+		    SELECT LPAD(IFNULL(MAX(PROD_NUM), 0) + 1, 6, '0') AS MAX_PROD_NUM, ID
+		      FROM SAMPLE
+		     WHERE USE_YN = 'Y'
+		     GROUP BY PROD_NUM, ID
+		) X ON Z.ID = X.ID
+		SET Z.PROD_NUM = X.MAX_PROD_NUM
+		WHERE Z.USE_YN = 'Y';
+	</update>
+	
     <select id="selectSampleListHashMap" parameterType="searchVO" resultType="java.util.HashMap">
         SELECT
               RPAD('_HEADER_', 20, ' ') AS HEADER

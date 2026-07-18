@@ -12,7 +12,7 @@
 
 	<insert id="insertSample" parameterType="SampleVO">
 
-			INSERT INTO sample
+			INSERT INTO SAMPLE
 				( ID
 				  , NAME
 				  , DESCRIPTION
@@ -27,7 +27,7 @@
 	</insert>
 
 	<update id="updateSample">
-			UPDATE sample
+			UPDATE SAMPLE
 			SET   NAME = IFNULL(#{name}, NAME)
 				, DESCRIPTION = IFNULL(#{description}, DESCRIPTION)
 				, USE_YN = IFNULL(#{useYn}, USE_YN)
@@ -37,7 +37,7 @@
 
 	<delete id="deleteSample">
 
-			DELETE FROM sample
+			DELETE FROM SAMPLE
 			WHERE ID = #{id}
 
 	</delete>
@@ -51,7 +51,7 @@
 				    , FILE_NAME
 				    , USE_YN
 				    , REG_USER
-			FROM sample
+			FROM SAMPLE
 			WHERE ID = #{id}
 			AND USE_YN = 'Y'
 
@@ -59,16 +59,33 @@
 
     <select id="selectSampleListAll" parameterType="searchVO" resultType="egovMap">
         SELECT
-            ID
-            , NAME
-            , CONCAT(DESCRIPTION, char(10)) AS DESCRIPTION
-            , USE_YN
-            , REG_USER
-          FROM sample
+            ID, NAME, DESCRIPTION, USE_YN, REG_USER, PROD_NUM
+          FROM SAMPLE
          WHERE 1=1
+         AND USE_YN = 'Y'
          -- LIMIT 5000
     </select>
-
+    
+    <select id="selectSampleListAllProdMax" parameterType="searchVO" resultType="String">
+		SELECT LPAD(IFNULL(MAX(PROD_NUM), 0) + 1, 6, '0') AS PROD_NUM_MAX
+		  FROM SAMPLE
+		 WHERE 1 = 1
+		   AND USE_YN = 'Y';
+    </select>
+    
+    <update id="updateSampleProdNumMax">
+		UPDATE SAMPLE Z
+		JOIN (
+		    -- 전체 최고값 + 1을 구하고 6자리로 패딩
+		    SELECT LPAD(IFNULL(MAX(PROD_NUM), 0) + 1, 6, '0') AS MAX_PROD_NUM, ID
+		      FROM SAMPLE
+		     WHERE USE_YN = 'Y'
+		     GROUP BY PROD_NUM, ID
+		) X ON Z.ID = X.ID
+		SET Z.PROD_NUM = X.MAX_PROD_NUM
+		WHERE Z.USE_YN = 'Y';
+	</update>
+	
     <select id="selectSampleListHashMap" parameterType="searchVO" resultType="java.util.HashMap">
         SELECT
               RPAD('_HEADER_', 20, ' ') AS HEADER
@@ -77,7 +94,7 @@
             , RPAD(DESCRIPTION, 50, ' ') AS DESCRIPTION
             , RPAD(USE_YN, 5, ' ') AS USE_YN
             , RPAD(REG_USER, 50, ' ') AS REG_USER
-          FROM sample
+          FROM SAMPLE
          WHERE 1=1
          LIMIT 10
     </select>
@@ -85,7 +102,7 @@
 	<select id="selectSampleList" parameterType="searchVO" resultType="egovMap">
 		SELECT
 		    ID, NAME, DESCRIPTION, FILE_NAME, USE_YN, REG_USER
-		FROM sample
+		FROM SAMPLE
 		WHERE 1=1
 		<if test="searchKeyword != null and searchKeyword != ''">
 		    <choose>
@@ -105,7 +122,7 @@
 	<select id="selectSampleListTotCnt" parameterType="searchVO" resultType="int">
 
 			SELECT COUNT(*) totcnt
-			FROM sample
+			FROM SAMPLE
 			WHERE 1=1
 			AND USE_YN = 'Y'
 			<if test="searchKeyword != null and searchKeyword != ''">

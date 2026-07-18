@@ -16,6 +16,7 @@ import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,7 +37,7 @@ public class HelloWorld {
 	}
 	
 	public static void runCreateSampleData() throws FileNotFoundException, IOException {
-		String filePath = "C:\\home\\john\\devHome\\file\\create\\sampleData_999999.csv"; // C:\home\john\devHome\file\create
+		String filePath = "C:\\home\\john\\devHome\\file\\create\\sampleData_9999.csv"; // C:\home\john\devHome\file\create
 		SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
 		long startTime = System.currentTimeMillis();
 		log.info("startTime : {}", sdf.format(new Date(startTime)));
@@ -49,15 +50,20 @@ public class HelloWorld {
 	            new OutputStreamWriter(new FileOutputStream(filePath), StandardCharsets.UTF_8),
 	            1024 * 1024)) {
 
+	    	
+	        Random random = new Random();
 	        StringBuilder sb = new StringBuilder(1000 * 100);
 	        int chunkCount = 0;
 	        sb.append("ID,NAME,DESCRIPTION,USE_YN,REG_USER");
 	        sb.append(System.lineSeparator());
-	        for (int i = 0; i < 999999; i++) {
-	            sb.append("SAMPLE-").append(i)
-	              .append(",Runtime Environment_").append(i)
-	              .append(",Presentation Layer").append(i)
-	              .append(",Y,eGov")
+	        for (int i = 0; i < 9999; i++) {
+	        	char randomYN = (Math.random() < 0.5) ? 'Y' : 'N';
+	        	
+	            sb.append("SAMPLE-").append(i).append(",")
+	              .append("Runtime Environment#").append(i).append(",")
+	              .append("Presentation Layer#").append(i).append(",")
+	              .append( randomYN ).append(",")
+	              .append("eGov")
 	              .append(System.lineSeparator());
 
 	            chunkCount++;

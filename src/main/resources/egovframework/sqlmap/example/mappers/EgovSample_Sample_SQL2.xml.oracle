@@ -53,18 +53,44 @@
 				    , REG_USER
 			FROM SAMPLE
 			WHERE ID=#{id}
-			AND USE_YN = 'Y'
+			-- AND USE_YN = 'Y'
 
 	</select>
 
     <select id="selectSampleListAll" parameterType="searchVO" resultType="egovMap">
-        SELECT /*+ INDEX(SAMPLE PK_SAMPLE) */
-            ID, NAME, DESCRIPTION, USE_YN, REG_USER
+        SELECT
+            ID
+            , NAME
+            , DESCRIPTION
+            , USE_YN
+            , REG_USER
           FROM SAMPLE
          WHERE 1=1
-         AND ROWNUM BETWEEN 0 AND 5000
+         AND USE_YN = 'Y'
+         -- AND ROWNUM BETWEEN 0 AND 5000
     </select>
     
+    <select id="selectSampleListAllProdMax" parameterType="searchVO" resultType="String">
+		SELECT LPAD( NVL(MAX(PROD_NUM), 0) + 1 , 6, '0') AS PROD_NUM_MAX
+		FROM SAMPLE
+		WHERE 1 = 1
+		AND USE_YN = 'Y'
+    </select>
+    
+    <update id="updateSampleProdNumMax">
+		MERGE INTO SAMPLE Z
+		USING (
+		    -- 전체 최고값 + 1을 구해서 하나의 행(Row)으로 리턴
+		    SELECT LPAD( NVL(MAX(PROD_NUM), 0) + 1 , 6, '0') AS MAX_PROD_NUM, ID
+		      FROM SAMPLE
+		     WHERE USE_YN = 'Y'
+		     GROUP BY PROD_NUM, ID
+		) X
+		ON (Z.USE_YN = 'Y' AND Z.ID = X.ID ) -- 업데이트 대상 조건을 ON 절에 기술 (또는 특정 ID 조건 등)
+		WHEN MATCHED THEN
+		UPDATE SET Z.PROD_NUM = X.MAX_PROD_NUM
+	</update>
+	
     <select id="selectSampleListHashMap" parameterType="searchVO" resultType="java.util.HashMap">
         SELECT /*+ INDEX(SAMPLE PK_SAMPLE) */
               RPAD('_HEADER_',20,' ') AS HEADER
@@ -97,7 +123,7 @@
 		                </when>
 		            </choose>
 		        </if>
-		        AND USE_YN = 'Y'
+		        -- AND USE_YN = 'Y'
 		        AND ROWNUM BETWEEN 0 AND 5000
 		        ORDER BY ID DESC
 		    ) A
@@ -111,7 +137,7 @@
 			SELECT COUNT(*) totcnt
 			FROM SAMPLE
 			WHERE 1=1
-			AND USE_YN = 'Y'
+			-- AND USE_YN = 'Y'
 			<if test="searchKeyword != null and searchKeyword != ''">
 		        <choose>
 		            <when test="searchCondition == 0">

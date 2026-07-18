@@ -226,8 +226,13 @@ public class EgovSampleController<E> {
 			long startTime = System.currentTimeMillis();
 			log.info("egovSampleListAjaxDownload.startTime : {}", sdf.format(new Date(startTime)));
 
-			resultMap = fileUnit.createChunkFile(sampleService.selectSampleListAll(searchVO));
+			resultMap = fileUnit.createChunkFile(sampleService.selectSampleListAll(searchVO), sampleService.selectSampleListAllProdMax());
 
+			log.info("resultMap.result:{}",   resultMap.get("result") );
+			if("success".equals(resultMap.get("result"))) {
+				sampleService.updateSampleProdNumMax();
+			}
+			
 			responseentity = new ResponseEntity<>(mapper.writeValueAsString(resultMap), HttpStatus.OK);
 
 		} catch (Exception e) {

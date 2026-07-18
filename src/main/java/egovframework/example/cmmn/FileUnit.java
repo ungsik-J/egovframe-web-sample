@@ -58,7 +58,10 @@ public class FileUnit {
 	
 	/** public static void main(String[] args) { } **/
 	
-	public Map<String, Object> createChunkFile(List<?> param) throws IOException {
+	public Map<String, Object> createChunkFile(List<?> param, String prodNumMax) throws IOException {
+		
+		
+		log.info("prodNumMax:{}", prodNumMax);
 		
 		log.info("createPath:{}", createPath);
 		Map<String, Object> resultMap = new HashMap<>();
@@ -109,6 +112,7 @@ public class FileUnit {
 				String description = "";
 				String useYn = "";
 				String regUser = "";
+				String prodNum = "";
 				for (Map.Entry<?, ?> entry : map.entrySet()) {
 					Object key = entry.getKey();
 					Object value = entry.getValue();
@@ -123,6 +127,8 @@ public class FileUnit {
 						useYn = "[" + StringUtils.rightPad((String) value, 32, "") + "]";
 					} else if ("regUser".equals(key)) {
 						regUser = "[" + StringUtils.rightPad((String) value, 32, "") + "]";
+					} else if ("prodNum".equals(key)) {
+						prodNum = prodNumMax;
 					}
 				}
 				// END::keySet //////////////////////////////////////////////////////////////////////
@@ -131,7 +137,7 @@ public class FileUnit {
 				if (!isFirstLine) {
 					sb.append(System.lineSeparator());
 				}
-				sb.append(id).append(name).append(description).append(useYn).append(regUser);
+				sb.append(id).append(name).append(description).append(useYn).append(regUser).append(prodNum);
 				isFirstLine = false;
 
 				recordCount++;
