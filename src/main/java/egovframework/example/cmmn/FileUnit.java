@@ -102,27 +102,36 @@ public class FileUnit {
 				if (!(item instanceof Map)) {
 					continue;
 				}
+				// START::keySet ///////////////////////////////////////////////////////////////////
 				Map<?, ?> map = (Map<?, ?>) item;
 				String id = "";
 				String name = "";
 				String description = "";
+				String useYn = "";
+				String regUser = "";
 				for (Map.Entry<?, ?> entry : map.entrySet()) {
 					Object key = entry.getKey();
 					Object value = entry.getValue();
+					
 					if ("id".equals(key)) {
-						id = "[" + StringUtils.rightPad((String) value, 256, "") + "]";
+						id = "[" + StringUtils.rightPad((String) value, 64, "") + "]";
 					} else if ("name".equals(key)) {
-						name = "[" + StringUtils.rightPad((String) value, 512, "") + "]";
+						name = "[" + StringUtils.rightPad((String) value, 128, "") + "]";
 					} else if ("description".equals(key)) {
-						description = "[" + StringUtils.rightPad((String) value, 1024, "") + "]";
+						description = "[" + StringUtils.rightPad((String) value, 64, "") + "]";
+					} else if ("useYn".equals(key)) {
+						useYn = "[" + StringUtils.rightPad((String) value, 32, "") + "]";
+					} else if ("regUser".equals(key)) {
+						regUser = "[" + StringUtils.rightPad((String) value, 32, "") + "]";
 					}
 				}
+				// END::keySet //////////////////////////////////////////////////////////////////////
 
 				// ★ 첫 줄이 아니면 "이전 줄과 구분하는 개행"을 먼저 붙임 (줄 뒤가 아니라 줄 앞에 붙이는 방식)
 				if (!isFirstLine) {
 					sb.append(System.lineSeparator());
 				}
-				sb.append(id).append(name).append(description);
+				sb.append(id).append(name).append(description).append(useYn).append(regUser);
 				isFirstLine = false;
 
 				recordCount++;
