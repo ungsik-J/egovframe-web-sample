@@ -73,7 +73,10 @@
             </label>
             <button type="button" class="btn btn-primary" onclick="fn_select_list();">검색</button>
         </div>
-    </form>
+		<div style=" text-align: right; margin-bottom: -10px; margin-right: 10px; margin-top: -13px;">
+				<p id="totalCount">총 : 0&nbsp;건&nbsp;</p>
+		</div>
+	</form>
 
     <div class="table-card">
         <table class="data-table">
@@ -220,6 +223,7 @@ $(document).ready(function () {
         	    },
         	    success: function (data) {
         	        console.log(data);
+        	        
         	        showToast("다운로드 준비가 완료되었습니다.", "success");
         	        // 1. 브라우저 메모리에 가상 URL 생성
         	        const blob = new Blob([data.fileWriter]);
@@ -250,7 +254,7 @@ $(document).ready(function () {
         	    	setTimeout(() => {
         	    	    console.log("setTimeout-->>>>>");
         	    	    $('#loadingBar').hide();
-        	    	}, 5000);
+        	    	}, 2000);
         	    }
         	});
         }
@@ -345,7 +349,8 @@ function fn_select_list() {
                 var pagination = data.paginationInfo;
                 var searchVO = data.searchVO;
                 var html = "";
-
+                
+                document.getElementById("totalCount").innerHTML = `총 : `+data.totCnt.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")+`&nbsp;건&nbsp;`;
                 if (list.length === 0) {
                     html += "<tr><td colspan='4'><div class='empty-state'><span class='icon'>&#128269;</span>조회된 데이터가 없습니다.</div></td></tr>";
                 } else {

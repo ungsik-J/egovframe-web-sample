@@ -229,7 +229,7 @@ public class EgovSampleController<E> {
 	@RequestMapping(value = "/egovSampleListAjax.do")
 	@ResponseBody // 리턴되는 Map을 JSON 구조로 자동 변환 (Jackson 라이브러리 필요)
 	public ResponseEntity<?> egovSampleListAjax(@ModelAttribute("searchVO") SampleDefaultVO searchVO) {
-		log.info("\nSTART::egovSampleListAjax {} ⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥");
+		log.info("\nSTART::egovSampleListAjax {} ");
 		Map<String, Object> resultMap = new HashMap<>();
 		ObjectMapper mapper = new ObjectMapper();
 		try {
@@ -238,7 +238,7 @@ public class EgovSampleController<E> {
 
 			/** 1. 페이징 설정 (전자정부 표준) */
 			searchVO.setPageUnit(10); // 한 페이지에 보여줄 개수
-			searchVO.setPageSize(5); // 페이징 네비게이션 크기
+			searchVO.setPageSize(10); // 페이징 네비게이션 크기
 
 			PaginationInfo paginationInfo = new PaginationInfo();
 
@@ -262,13 +262,14 @@ public class EgovSampleController<E> {
 			log.info("sampleList:{}", sampleList);
 
 			/** 3. 결과 Map에 담기 */
+			resultMap.put("totCnt", totCnt);
 			resultMap.put("resultList", sampleList);
 			resultMap.put("paginationInfo", paginationInfo);
 			resultMap.put("searchVO", searchVO);
 			resultMap.put("result", "SUCCESS");
 
 			log.info("resultMap : {}", mapper.writeValueAsString(resultMap), resultMap);
-			log.info("END::egovSampleListAjax {}⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤");
+			log.info("END::egovSampleListAjax {}");
 			return new ResponseEntity<>(mapper.writeValueAsString(resultMap), HttpStatus.OK);
 
 		} catch (Exception e) {
@@ -344,7 +345,7 @@ public class EgovSampleController<E> {
 	@GetMapping("/egovSampleList.do")
 	public String egovSampleList(@ModelAttribute("searchVO") SampleDefaultVO searchVO, ModelMap model)
 			throws Exception {
-		log.info("\nSTART::egovSampleList {} ⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥⩥");
+		log.info("\nSTART::egovSampleList.searchVO {}", searchVO);
 		ObjectMapper objectMapper = new ObjectMapper();
 		try {
 			log.info("searchVO : {}", objectMapper.writeValueAsString(searchVO));
@@ -382,14 +383,11 @@ public class EgovSampleController<E> {
 			}
 			resultList.add(rowMap);
 		}
-		log.info("\n🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨\ncolArry:{}",
-				objectMapper.writeValueAsString(resultList) + "\n🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨");
-		/////////////////////////////////////////////////////////////////////////////////////////
 
 		int totCnt = sampleService.selectSampleListTotCnt(searchVO);
 		paginationInfo.setTotalRecordCount(totCnt);
 		model.addAttribute("paginationInfo", paginationInfo);
-		log.info("\nEND::egovSampleList {}⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤⩤");
+		log.info("\nEND::egovSampleList {}");
 		return "sample/egovSampleList";
 	}
 
