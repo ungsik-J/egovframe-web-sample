@@ -14,36 +14,6 @@
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 	<link href="css/egovframework/indexUI.css" rel="stylesheet" />
-	<style>
-	/* 화면 전체를 흐리게 덮는 레이어 */
-#loadingBar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.4);
-    z-index: 9999; /* 최상단에 보이도록 설정 */
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-/* 동그라미 스피너 애니메이션 */
-.spinner {
-    width: 50px;
-    height: 50px;
-    border: 5px solid #f3f3f3;
-    border-top: 5px solid #3498db;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-	</style>
 </head>
 <body>
 <div id="toastStack"></div>
@@ -208,55 +178,53 @@ $(document).ready(function () {
         }
     });
 
-    $("#checked_download").on("change", function (e) {
-        if (e.target.checked) {
-        	$.ajax({
-        	    type: "GET",
-        	    url: "<c:url value='/egovSampleListAjaxDownload.do'/>",
-        	    data: null,
-        	    dataType: "json",
-        	    cache: false,
-        	    beforeSend: function() {
-        	        // [원리] AJAX 요청이 시작되기 직전에 실행
-        	        // 로딩바 표시 (예: 로딩 DIV를 보임)
-        	        $('#loadingBar').show(); 
-        	    },
-        	    success: function (data) {
-        	        console.log(data);
-        	        
-        	        showToast("다운로드 준비가 완료되었습니다.", "success");
-        	        // 1. 브라우저 메모리에 가상 URL 생성
-        	        const blob = new Blob([data.fileWriter]);
-        	        const downloadUrl = window.URL.createObjectURL(blob);
-        	        
-        	        // 2. 가상의 <a> 태그 생성 및 클릭 이벤트 발생
-        	        const a = document.createElement("a");
-        	        a.href = downloadUrl;
-        	        
-        	        // 3. 파일명 지정 (서버에서 헤더로 주는 이름을 쓰거나, 직접 지정)
-        	        a.download = data.createFileName //"sample_list.xlsx"; // 원하는 파일명과 확장자 입력
-        	        
-        	        document.body.appendChild(a);
-        	        a.click(); // 다운로드 시작
-        	        
-        	        // 4. 다운로드 후 가상 링크 및 메모리 해제
-        	        document.body.removeChild(a);
-        	        window.URL.revokeObjectURL(downloadUrl);
-        	        
-        	    },
-        	    error: function (xhr, status, error) {
-        	        console.error(xhr, status, error);
-        	        showToast("다운로드 처리 중 오류가 발생했습니다.", "error");
-        	    },
-        	    complete: function() {
-        	        // [원리] success든 error든 요청이 끝나면 무조건 실행
-        	        // 로딩바 숨김
-        	    	setTimeout(() => {
-        	    	    console.log("setTimeout-->>>>>");
-        	    	    $('#loadingBar').hide();
-        	    	}, 2000);
-        	    }
-        	});
+    $("#checked_download").on("change", async function (e) {
+        // 체크박스가 해제되었을 때는 아무것도 하지 않음
+        if (!e.target.checked) return;
+
+        try {
+            // 1. [beforeSend 역할] 요청 시작 전 로딩바 표시
+            $('#loadingBar').show(); 
+
+            // 2. AJAX 요청 대기 (await)
+            const data = await $.ajax({
+                type: "GET",
+                url: "<c:url value='/egovSampleListAjaxDownload.do'/>",
+                data: null,
+                dataType: "json",
+                cache: false
+            });
+
+            // 3. [success 역할] 요청 성공 시 다운로드 처리
+            console.log(data);
+            showToast("다운로드 준비가 완료되었습니다.", "success");
+            
+            // 브라우저 메모리에 가상 URL 생성
+            const blob = new Blob([data.fileWriter]);
+            const downloadUrl = window.URL.createObjectURL(blob);
+            
+            // 가상의 <a> 태그 생성 및 클릭 이벤트 발생
+            const a = document.createElement("a");
+            a.href = downloadUrl;
+            a.download = data.createFileName; // 파일명 지정
+            
+            document.body.appendChild(a);
+            a.click(); // 다운로드 시작
+            
+            // 다운로드 후 가상 링크 및 메모리 해제
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(downloadUrl);
+
+        } catch (error) {
+            // 4. [error 역할] 요청 실패 시 에러 처리
+            console.error("다운로드 중 에러 발생:", error);
+            showToast("다운로드 처리 중 오류가 발생했습니다.", "error");
+
+        } finally {
+            // 5. [complete 역할] 성공/실패 여부와 상관없이 무조건 실행 (2초 뒤 종료)
+            alert('다운로드가 완료되었습니다.')
+            $('#loadingBar').hide();
+            e.target.checked = false; // 안전하게 e.target으로 체크 해제 적용
         }
     });
 });
