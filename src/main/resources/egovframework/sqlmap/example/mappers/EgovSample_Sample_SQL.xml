@@ -12,13 +12,13 @@
 
 	<insert id="insertSample" parameterType="SampleVO">
 
-			INSERT INTO SAMPLE
-				( ID
-				  , NAME
-				  , DESCRIPTION
-				  , USE_YN
-				  , REG_USER )
-			VALUES ( #{id}
+			insert into sample
+				( id
+				  , name
+				  , description
+				  , use_yn
+				  , reg_user )
+			values ( #{id}
 				  , #{name}
 				  , #{description}
 				  , #{useYn}
@@ -27,111 +27,107 @@
 	</insert>
 
 	<update id="updateSample">
-			UPDATE SAMPLE
-			SET   NAME = IFNULL(#{name}, NAME)
-				, DESCRIPTION = IFNULL(#{description}, DESCRIPTION)
-				, USE_YN = IFNULL(#{useYn}, USE_YN)
-				, FILE_NAME = IFNULL(#{fileName}, FILE_NAME)
-			WHERE ID = #{id}
+			UPDATE sample
+			set   name = ifnull(#{name}, name)
+				, description = ifnull(#{description}, description)
+				, use_yn = ifnull(#{useYn}, use_yn)
+				, file_name = ifnull(#{fileName}, file_name)
+			where id = #{id}
 	</update>
 
 	<delete id="deleteSample">
-
-			DELETE FROM SAMPLE
-			WHERE ID = #{id}
-
+			delete from sample
+			where id = #{id}
 	</delete>
 
 	<select id="selectSample" resultMap="sample">
-
-			SELECT
-				    ID
-				    , NAME
-				    , DESCRIPTION
-				    , FILE_NAME
-				    , USE_YN
-				    , REG_USER
-			FROM SAMPLE
-			WHERE ID = #{id}
-			AND USE_YN = 'Y'
-
+			select
+				    id
+				    , name
+				    , description
+				    , file_name
+				    , use_yn
+				    , reg_user
+			from sample
+			where id = #{id}
+			and use_yn = 'Y'
 	</select>
 
     <select id="selectSampleListAll" parameterType="searchVO" resultType="egovMap">
-        SELECT
-            ID, NAME, DESCRIPTION, USE_YN, REG_USER, PROD_NUM
-          FROM SAMPLE
-         WHERE 1=1
-         AND USE_YN = 'Y'
-         -- LIMIT 5000
+        select
+            id, name, description, use_yn, reg_user, prod_num
+          from sample
+         where 1=1
+         and use_yn = 'Y'
+         -- limit 5000
     </select>
     
     <select id="selectSampleListAllProdMax" parameterType="searchVO" resultType="String">
-		SELECT LPAD(IFNULL(MAX(PROD_NUM), 0) + 1, 6, '0') AS PROD_NUM_MAX
-		  FROM SAMPLE
-		 WHERE 1 = 1
-		   AND USE_YN = 'Y';
+		select lpad(ifnull(max(prod_num), 0) + 1, 6, '0') as prod_num_max
+		  from sample
+		 where 1 = 1
+		   and use_yn = 'Y';
     </select>
     
     <update id="updateSampleProdNumMax">
-		UPDATE SAMPLE Z
-		JOIN (
+		update sample z
+		join (
 		    -- 전체 최고값 + 1을 구하고 6자리로 패딩
-		    SELECT LPAD(IFNULL(MAX(PROD_NUM), 0) + 1, 6, '0') AS MAX_PROD_NUM, ID
-		      FROM SAMPLE
-		     WHERE USE_YN = 'Y'
-		     GROUP BY PROD_NUM, ID
-		) X ON Z.ID = X.ID
-		SET Z.PROD_NUM = X.MAX_PROD_NUM
-		WHERE Z.USE_YN = 'Y';
+		    select lpad(ifnull(max(prod_num), 0) + 1, 6, '0') as max_prod_num, id
+		      from sample
+		     where use_yn = 'Y'
+		     group by prod_num, id
+		) x on z.id = x.id
+		set z.prod_num = x.max_prod_num
+		where z.use_yn = 'Y';
 	</update>
 	
     <select id="selectSampleListHashMap" parameterType="searchVO" resultType="java.util.HashMap">
-        SELECT
-              RPAD('_HEADER_', 20, ' ') AS HEADER
-            , RPAD(ID, 20, ' ') AS ID
-            , RPAD(NAME, 45, ' ') AS NAME
-            , RPAD(DESCRIPTION, 50, ' ') AS DESCRIPTION
-            , RPAD(USE_YN, 5, ' ') AS USE_YN
-            , RPAD(REG_USER, 50, ' ') AS REG_USER
-          FROM SAMPLE
-         WHERE 1=1
-         LIMIT 10
+        select
+              rpad('_header_', 20, ' ') as header
+            , rpad(id, 20, ' ') as id
+            , rpad(name, 45, ' ') as name
+            , rpad(description, 50, ' ') as description
+            , rpad(use_yn, 5, ' ') as use_yn
+            , rpad(reg_user, 50, ' ') as reg_user
+          from sample
+         where 1=1
+         limit 10
     </select>
 
 	<select id="selectSampleList" parameterType="searchVO" resultType="egovMap">
-		SELECT
-		    ID, NAME, DESCRIPTION, FILE_NAME, USE_YN, REG_USER
-		FROM SAMPLE
-		WHERE 1=1
+		select
+		    id, name, description, file_name, use_yn, reg_user
+		from sample
+		where 1=1
 		<if test="searchKeyword != null and searchKeyword != ''">
 		    <choose>
 		        <when test="searchCondition == 0">
-		            AND ID LIKE CONCAT('%', #{searchKeyword}, '%')
+		            and id like concat('%', #{searchKeyword}, '%')
 		        </when>
 		        <when test="searchCondition == 1">
-		            AND NAME LIKE CONCAT('%', #{searchKeyword}, '%')
+		            and name like concat('%', #{searchKeyword}, '%')
 		        </when>
 		    </choose>
 		</if>
-		AND USE_YN = 'Y'
-		ORDER BY ID DESC
-		LIMIT #{firstIndex}, #{recordCountPerPage}
+		and use_yn = 'Y'
+		order by id desc
+		limit #{firstIndex}, #{recordCountPerPage}
 	</select>
 
 	<select id="selectSampleListTotCnt" parameterType="searchVO" resultType="int">
 
-			SELECT COUNT(*) totcnt
-			FROM SAMPLE
-			WHERE 1=1
-			AND USE_YN = 'Y'
+			select count(*) totcnt
+			from sample
+			where 1=1
+			and use_yn = 'Y'
 			<if test="searchKeyword != null and searchKeyword != ''">
 		        <choose>
 		            <when test="searchCondition == 0">
-						AND ID LIKE CONCAT('%', #{searchKeyword}, '%')
+						and id like concat('%', #{searchKeyword}, '%')
 					</when>
 		            <when test="searchCondition == 1">
-						AND	NAME LIKE CONCAT('%', #{searchKeyword}, '%')
+						and	name like concat('%', #{searchKeyword}, '%')
 					</when>
 				</choose>
 			</if>
