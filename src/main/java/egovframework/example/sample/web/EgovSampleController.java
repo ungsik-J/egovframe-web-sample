@@ -115,13 +115,12 @@ public class EgovSampleController<E> {
 	@Autowired
 	private final MapKeyConverter mapKeyConverter;
 
-	@Resource(name = "propertiesService")
-	private EgovPropertyService propertiesService;
-
 	private String uploadPath;
 
 	private String createPath;
 
+	@Resource(name = "propertiesService")
+	private EgovPropertyService propertiesService;
 	/**
 	 * 의존성 주입이 완료된 후 자동으로 실행되는 초기화 메서드
 	 */
