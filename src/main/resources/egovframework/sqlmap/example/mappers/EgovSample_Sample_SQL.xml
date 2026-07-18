@@ -62,7 +62,7 @@
             ID, NAME, DESCRIPTION, USE_YN, REG_USER
           FROM sample
          WHERE 1=1
-         LIMIT 5000
+         -- LIMIT 5000
     </select>
 
     <select id="selectSampleListHashMap" parameterType="searchVO" resultType="java.util.HashMap">

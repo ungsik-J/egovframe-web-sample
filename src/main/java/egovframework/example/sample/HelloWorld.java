@@ -1,6 +1,7 @@
 package egovframework.example.sample;
 
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -28,17 +29,22 @@ public class HelloWorld {
 		
 		int rownum = 9999999;
 		
-		
+		runCreateSampleData();
 		
 		
 		//runCreateSampleData();
 	}
 	
 	public static void runCreateSampleData() throws FileNotFoundException, IOException {
-		String filePath = "C:/Temp/upload/sample/sampleData_9999999.csv";
+		String filePath = "C:\\home\\john\\devHome\\file\\create\\sampleData_999999.csv"; // C:\home\john\devHome\file\create
 		SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
 		long startTime = System.currentTimeMillis();
 		log.info("startTime : {}", sdf.format(new Date(startTime)));
+		
+		File file = new File(filePath);
+		
+		file.delete();
+		
 	    try (BufferedWriter writer = new BufferedWriter(
 	            new OutputStreamWriter(new FileOutputStream(filePath), StandardCharsets.UTF_8),
 	            1024 * 1024)) {
@@ -47,7 +53,7 @@ public class HelloWorld {
 	        int chunkCount = 0;
 	        sb.append("ID,NAME,DESCRIPTION,USE_YN,REG_USER");
 	        sb.append(System.lineSeparator());
-	        for (int i = 0; i < 9999999; i++) {
+	        for (int i = 0; i < 999999; i++) {
 	            sb.append("SAMPLE-").append(i)
 	              .append(",Runtime Environment_").append(i)
 	              .append(",Presentation Layer").append(i)

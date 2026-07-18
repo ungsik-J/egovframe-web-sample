@@ -33,6 +33,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
+import org.springmodules.validation.bean.conf.loader.annotation.handler.Validator;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -63,16 +64,35 @@ public class FileUnit {
 		Map<String, Object> resultMap = new HashMap<>();
 		String filePath = createPath;
 		String fileName = "chunkFile";
-		File file = new File(filePath + fileName);
-		File parentDir = file.getParentFile();
-		if (parentDir != null && !parentDir.exists()) {
-			parentDir.mkdirs();
+		
+		// files checked
+		// Validator Directory
+		File dir = new File(filePath);
+		if (!dir.exists() || !dir.isDirectory()) {
+			log.info("\n유효하지 않은 디렉토리입니다: " + filePath);
+			throw new IllegalArgumentException("#1, 유효하지 않은 디렉토리입니다: " + filePath);
 		}
+		// init files
+		dir = new File(filePath);
+		File[] files = dir.listFiles((d, name) -> name.startsWith(fileName));
+		for (File file : files) {
+			if (file.isFile()) {
+				boolean deleted = file.delete();
+				if (deleted) {
+					log.info("\n1.기존파일 삭제 완료: " + file.getName());
+				} else {
+					log.info("\n삭제 실패: " + file.getName());
+					throw new IllegalArgumentException("#2, 파일 삭제 실패" + filePath);
+				}
+			}
+		}
+		
 		long recordCount = 0;
 		int chunkCount = 0;
 		boolean isFirstLine = true; // ★ 전체 데이터 기준 첫 줄 여부 (청크와 무관하게 한 번만 true)
 	
-
+		UUID uuid = UUID.randomUUID();
+		File file = new File(filePath + fileName + "_" + uuid.toString());
 		// ★ 리스트 3개(writeobj, valueLineList) 만들지 않고 바로 파일에 씀
 		StringBuilder sb = new StringBuilder(1000 * 2200);
 		try (BufferedWriter writer = new BufferedWriter(
@@ -127,6 +147,14 @@ public class FileUnit {
 			return resultMap;
 		} finally {
 			// ★ 큰 리스트는 다 쓴 뒤 참조 해제 (GC 대상이 되도록)
+			
+			if (file.exists()) {
+				log.info("\n2.새로운 파일 생성 완료: " + file.getName());
+				file = new File(filePath + file.getName() + ".END");
+				file.createNewFile();
+				log.info("\n3.새로운 END파일 생성 완료: " + file.getName());
+			}
+			
 			param = null;
 			sb = null;
 			resultMap.put("result", "success");
