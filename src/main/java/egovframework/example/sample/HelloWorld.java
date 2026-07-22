@@ -54,16 +54,20 @@ public class HelloWorld {
 	        Random random = new Random();
 	        StringBuilder sb = new StringBuilder(1000 * 100);
 	        int chunkCount = 0;
-	        sb.append("ID,NAME,DESCRIPTION,USE_YN,REG_USER");
+	        sb.append("ID,NAME,DESCRIPTION,USE_YN,REG_USER,FILE_NAME,PROD_NUM,AMT");
 	        sb.append(System.lineSeparator());
 	        for (int i = 0; i < 9999; i++) {
 	        	char randomYN = (Math.random() < 0.5) ? 'Y' : 'N';
-	        	
+	        	int random5Digits = (int) (Math.random() * 90000) + 10000;
+	        	int random4Digits = (int) (Math.random() * 9000) + 1000;
 	            sb.append("SAMPLE-").append(i).append(",")
 	              .append("Runtime Environment#").append(i).append(",")
 	              .append("Presentation Layer#").append(i).append(",")
 	              .append( randomYN ).append(",")
-	              .append("eGov")
+	              .append("eGov").append(",")
+	              .append("is not file").append(",")
+	              .append(random4Digits).append(",") //prod_num
+	              .append(random5Digits) //amt
 	              .append(System.lineSeparator());
 
 	            chunkCount++;

@@ -2,6 +2,7 @@
 <%@ taglib prefix="c"      uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="form"   uri="http://www.springframework.org/tags/form" %>
 <%@ taglib prefix="spring" uri="http://www.springframework.org/tags"%>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -57,6 +58,8 @@
                     <th>이름</th>
                     <th>파일</th>
                     <th>사용</th>
+                    <th>상품번호</th>
+                    <th>금액</th>
                 </tr>
             </thead>
             <tbody id="listBody">
@@ -323,6 +326,7 @@ function fn_select_list() {
                     html += "<tr><td colspan='4'><div class='empty-state'><span class='icon'>&#128269;</span>조회된 데이터가 없습니다.</div></td></tr>";
                 } else {
                     $.each(list, function (index, item) {
+                    	console.log( item )
                         var rowNum = pagination.totalRecordCount + 1 - ((searchVO.pageIndex - 1) * searchVO.pageSize + (index + 1));
 
                         let file = (item.fileName) ? item.fileName.split("/").pop() : "";
@@ -348,7 +352,9 @@ function fn_select_list() {
                         html += "  <td class='col-id mono'>" + item.id + "</td>";
                         html += "  <td><a href='javascript:void(0);' class='row-link' onclick='fn_detail(" + JSON.stringify(item) + ")'>" + item.name + "</a></td>";
                         html += "  <td class='col-id' name='fileName'>" + fileCell + "</td>"
-                        html += "  <td class='col-id' name='useYn'>" + item.useYn + "</td>";
+                        html += "  <td class='col-id' name='useYn'>" + item.useYn + "</td>"
+                        html += "  <td class='col-id' name='prodNum'>" + item.prodNum + "</td>"
+                        html += "  <td class='col-id' name='amt'>"+item.amt+"</td>";
                         html += "</tr>";
                     });
                 }

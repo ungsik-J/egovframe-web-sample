@@ -1,136 +1,153 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="egovframework.example.sample.service.impl.SampleMapper">
+<mapper
+	namespace="egovframework.example.sample.service.impl.SampleMapper">
 
-	<resultMap id="sample" type="egovframework.example.sample.service.SampleVO">
-		<result property="id" column="id"/>
-		<result property="name" column="name"/>
-		<result property="description" column="description"/>
-		<result property="useYn" column="use_yn"/>
-		<result property="regUser" column="reg_user"/>
+	<resultMap id="sample"
+		type="egovframework.example.sample.service.SampleVO">
+		<result property="id" column="id" />
+		<result property="name" column="name" />
+		<result property="description" column="description" />
+		<result property="useYn" column="use_yn" />
+		<result property="regUser" column="reg_user" />
 	</resultMap>
 
 	<insert id="insertSample" parameterType="SampleVO">
 
-			insert into sample
-				( id
-				  , name
-				  , description
-				  , use_yn
-				  , reg_user )
-			values ( #{id}
-				  , #{name}
-				  , #{description}
-				  , #{useYn}
-				  , #{regUser} )
+		insert into sample
+		( id
+		,
+		name
+		, description
+		, use_yn
+		, reg_user )
+		values ( #{id}
+		, #{name}
+		,
+		#{description}
+		, #{useYn}
+		, #{regUser} )
 
 	</insert>
 
 	<update id="updateSample">
-			UPDATE sample
-			set   name = ifnull(#{name}, name)
-				, description = ifnull(#{description}, description)
-				, use_yn = ifnull(#{useYn}, use_yn)
-				, file_name = ifnull(#{fileName}, file_name)
-			where id = #{id}
+		UPDATE sample
+		set name = ifnull(#{name}, name)
+		,
+		description = ifnull(#{description}, description)
+		, use_yn =
+		ifnull(#{useYn}, use_yn)
+		, file_name = ifnull(#{fileName}, file_name)
+		where id = #{id}
 	</update>
 
 	<delete id="deleteSample">
-			delete from sample
-			where id = #{id}
+		delete from sample
+		where id = #{id}
 	</delete>
 
 	<select id="selectSample" resultMap="sample">
-			select
-				    id
-				    , name
-				    , description
-				    , file_name
-				    , use_yn
-				    , reg_user
-			from sample
-			where id = #{id}
-			and use_yn = 'Y'
+		select id, name,
+		description, use_yn, reg_user, file_name, prod_num, amt
+		from hr.sample
+		where id = #{id}
+		and use_yn = 'Y'
 	</select>
 
-    <select id="selectSampleListAll" parameterType="searchVO" resultType="egovMap">
-        select
-            id, name, description, use_yn, reg_user, prod_num
-          from sample
-         where 1=1
-         and use_yn = 'Y'
-         -- limit 5000
-    </select>
-    
-    <select id="selectSampleListAllProdMax" parameterType="searchVO" resultType="String">
-		select lpad(ifnull(max(prod_num), 0) + 1, 6, '0') as prod_num_max
-		  from sample
-		 where 1 = 1
-		   and use_yn = 'Y';
-    </select>
-    
-    <update id="updateSampleProdNumMax">
+	<select id="selectSampleListAll" parameterType="searchVO"
+		resultType="egovMap">
+		select id, name, description, use_yn, reg_user, file_name,
+		prod_num, amt
+		from hr.sample
+		where 1=1
+		and use_yn = 'Y'
+		-- limit 5000
+	</select>
+
+	<select id="selectSampleListAllProdMax" parameterType="searchVO"
+		resultType="String">
+		select lpad(ifnull(max(prod_num), 0) + 1, 6, '0') as
+		prod_num_max
+		from sample
+		where 1 = 1
+		and use_yn = 'Y';
+	</select>
+
+	<update id="updateSampleProdNumMax">
 		update sample z
 		join (
-		    -- 전체 최고값 + 1을 구하고 6자리로 패딩
-		    select lpad(ifnull(max(prod_num), 0) + 1, 6, '0') as max_prod_num, id
-		      from sample
-		     where use_yn = 'Y'
-		     group by prod_num, id
+		-- 전체 최고값 + 1을 구하고 6자리로 패딩
+		select lpad(ifnull(max(prod_num), 0) + 1, 6, '0') as max_prod_num, id
+		from sample
+		where use_yn = 'Y'
+		group by prod_num, id
 		) x on z.id = x.id
 		set z.prod_num = x.max_prod_num
 		where z.use_yn = 'Y';
 	</update>
-	
-    <select id="selectSampleListHashMap" parameterType="searchVO" resultType="java.util.HashMap">
-        select
-              rpad('_header_', 20, ' ') as header
-            , rpad(id, 20, ' ') as id
-            , rpad(name, 45, ' ') as name
-            , rpad(description, 50, ' ') as description
-            , rpad(use_yn, 5, ' ') as use_yn
-            , rpad(reg_user, 50, ' ') as reg_user
-          from sample
-         where 1=1
-         limit 10
-    </select>
 
-	<select id="selectSampleList" parameterType="searchVO" resultType="egovMap">
+	<select id="selectSampleListHashMap" parameterType="searchVO"
+		resultType="java.util.HashMap">
 		select
-		    id, name, description, file_name, use_yn, reg_user
+		rpad('_header_', 20, ' ') as header
+		, rpad(id, 20, '
+		') as id
+		, rpad(name, 45, ' ') as name
+		, rpad(description, 50, ' ') as
+		description
+		, rpad(use_yn, 5, ' ') as use_yn
+		, rpad(reg_user, 50, ' ')
+		as reg_user
 		from sample
 		where 1=1
+		limit 10
+	</select>
+
+	<select id="selectSampleList" parameterType="searchVO"
+		resultType="egovMap">
+		select id
+		, name
+		, description
+		, use_yn
+		, reg_user
+		, ifnull(file_name,'') as file_name
+		, ifnull(prod_num,'0') as prod_num
+		, ifnull(amt,0) as amt
+		from hr.sample
+		where 1=1
 		<if test="searchKeyword != null and searchKeyword != ''">
-		    <choose>
-		        <when test="searchCondition == 0">
-		            and id like concat('%', #{searchKeyword}, '%')
-		        </when>
-		        <when test="searchCondition == 1">
-		            and name like concat('%', #{searchKeyword}, '%')
-		        </when>
-		    </choose>
+			<choose>
+				<when test="searchCondition == 0">
+					and id like concat('%', #{searchKeyword}, '%')
+				</when>
+				<when test="searchCondition == 1">
+					and name like concat('%', #{searchKeyword}, '%')
+				</when>
+			</choose>
 		</if>
 		-- and use_yn = 'Y'
 		order by id desc
-		limit #{firstIndex}, #{recordCountPerPage}
+		limit #{firstIndex},
+		#{recordCountPerPage}
 	</select>
 
-	<select id="selectSampleListTotCnt" parameterType="searchVO" resultType="int">
+	<select id="selectSampleListTotCnt" parameterType="searchVO"
+		resultType="int">
 
-			select count(*) totcnt
-			from sample
-			where 1=1
-			and use_yn = 'Y'
-			<if test="searchKeyword != null and searchKeyword != ''">
-		        <choose>
-		            <when test="searchCondition == 0">
-						and id like concat('%', #{searchKeyword}, '%')
-					</when>
-		            <when test="searchCondition == 1">
-						and	name like concat('%', #{searchKeyword}, '%')
-					</when>
-				</choose>
-			</if>
+		select count(*) totcnt
+		from sample
+		where 1=1
+		and use_yn = 'Y'
+		<if test="searchKeyword != null and searchKeyword != ''">
+			<choose>
+				<when test="searchCondition == 0">
+					and id like concat('%', #{searchKeyword}, '%')
+				</when>
+				<when test="searchCondition == 1">
+					and name like concat('%', #{searchKeyword}, '%')
+				</when>
+			</choose>
+		</if>
 	</select>
 
 </mapper>
