@@ -19,21 +19,20 @@ package egovframework.example.sample.service;
  * @Class Name : SampleVO.java
  * @Description : SampleVO Class
  * @Modification Information
- * @
- * @  수정일      수정자              수정내용
- * @ ---------   ---------   -------------------------------
- * @ 2009.03.16           최초생성
+ * @ @ 수정일 수정자 수정내용 @ --------- --------- ------------------------------- @
+ *   2009.03.16 최초생성
  *
  * @author 개발프레임웍크 실행환경 개발팀
  * @since 2009. 03.16
  * @version 1.0
  * @see
  *
- *  Copyright (C) by MOPAS All right reserved.
+ *      Copyright (C) by MOPAS All right reserved.
  */
+@SuppressWarnings("serial")
 public class SampleVO extends SampleDefaultVO {
 
-	private static final long serialVersionUID = 1L;
+	private static long serialVersionUID = 1L;
 
 	/** 아이디 */
 	private String id;
@@ -49,56 +48,140 @@ public class SampleVO extends SampleDefaultVO {
 
 	/** 등록자 */
 	private String regUser;
-	
+
 	/** 파일정보 */
 	private String fileName;
 
-	public String getFileName() {
-		return fileName;
+	/** 상품정보 */
+	private String prodNum;
+
+	/** 금액 */
+	private int amt;
+
+	/**
+	 * @return the serialversionuid
+	 */
+	public static synchronized long getSerialversionuid() {
+		return serialVersionUID;
 	}
 
-	public void setFileName(String fileName) {
-		this.fileName = fileName;
+	/**
+	 * @param serialversionuid the serialversionuid to set
+	 */
+	public static synchronized void setSerialversionuid(long serialversionuid) {
+		serialVersionUID = serialversionuid;
 	}
 
-	public String getId() {
+	/**
+	 * @return the id
+	 */
+	public synchronized String getId() {
 		return id;
 	}
 
-	public void setId(String id) {
+	/**
+	 * @param id the id to set
+	 */
+	public synchronized void setId(String id) {
 		this.id = id;
 	}
 
-	public String getName() {
+	/**
+	 * @return the name
+	 */
+	public synchronized String getName() {
 		return name;
 	}
 
-	public void setName(String name) {
+	/**
+	 * @param name the name to set
+	 */
+	public synchronized void setName(String name) {
 		this.name = name;
 	}
 
-	public String getDescription() {
+	/**
+	 * @return the description
+	 */
+	public synchronized String getDescription() {
 		return description;
 	}
 
-	public void setDescription(String description) {
+	/**
+	 * @param description the description to set
+	 */
+	public synchronized void setDescription(String description) {
 		this.description = description;
 	}
 
-	public String getUseYn() {
+	/**
+	 * @return the useYn
+	 */
+	public synchronized String getUseYn() {
 		return useYn;
 	}
 
-	public void setUseYn(String useYn) {
+	/**
+	 * @param useYn the useYn to set
+	 */
+	public synchronized void setUseYn(String useYn) {
 		this.useYn = useYn;
 	}
 
-	public String getRegUser() {
+	/**
+	 * @return the regUser
+	 */
+	public synchronized String getRegUser() {
 		return regUser;
 	}
 
-	public void setRegUser(String regUser) {
+	/**
+	 * @param regUser the regUser to set
+	 */
+	public synchronized void setRegUser(String regUser) {
 		this.regUser = regUser;
+	}
+
+	/**
+	 * @return the fileName
+	 */
+	public synchronized String getFileName() {
+		return fileName;
+	}
+
+	/**
+	 * @param fileName the fileName to set
+	 */
+	public synchronized void setFileName(String fileName) {
+		this.fileName = fileName;
+	}
+
+	/**
+	 * @return the prodNum
+	 */
+	public synchronized String getProdNum() {
+		return prodNum;
+	}
+
+	/**
+	 * @param prodNum the prodNum to set
+	 */
+	public synchronized void setProdNum(String prodNum) {
+		this.prodNum = prodNum;
+	}
+
+	/**
+	 * @return the amt
+	 */
+	public synchronized int getAmt() {
+		return amt;
+	}
+
+	/**
+	 * @param amt the amt to set
+	 */
+	public synchronized void setAmt(int amt) {
+		this.amt = amt;
 	}
 
 }
